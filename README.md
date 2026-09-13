@@ -18,8 +18,20 @@ Three of them report a **null or negative result**, because that's what the data
 | **[RL Chess Engine](https://github.com/Danny-397/RL-Chess-Engine)** · [live](https://rlchess.xyz) | AlphaZero-style engine given only the rules, learning from self-play. Play the trained net in your browser | 10× more self-play bought **14 Elo**. Diagnosed as a *signal* problem, not compute: reweighting self-play moved Elo-vs-random **−21 → +28** at the same compute |
 | **[RL-Trader](https://github.com/Danny-397/RL-for-Crypto-and-stocks-)** · [live](https://rl-for-crypto-and-stocks.vercel.app) | PPO written from the algorithm up, framed as a study of how deep-RL overfits and how you measure it honestly | A single seed showed **+275%**. Across 5 seeds it was **−2.7% [−31%, +27%]** — the edge was the seed. Domain randomization is what actually fixed it |
 | **[AlphaGlyph](https://github.com/Danny-397/Alphaglyph)** · [live](https://alphaglyph.org) | Backtesting lab that runs its own results through Monte Carlo, Deflated Sharpe, and Fama-French | Built the instrument that indicts its own output: reports a **72% probability of backtest overfitting** on its own strategy grid |
-| **[Tradeski](https://github.com/Danny-397/Tradeski)** · [live](https://tradeski.dev) | Full-stack analytics: WebSocket streaming, indicator engine, LLM analyst grounded in your actual holdings + Fed macro data | Real-time system with Postgres persistence and a live news-sentiment pipeline |
+| **[Tradeski](https://github.com/Danny-397/Tradeski)** · [live](https://tradeski.dev) | Full-stack analytics: WebSocket streaming, indicator engine, LLM analyst grounded in your actual holdings + Fed macro data | Every indicator hand-rolled on raw NumPy — no TA-Lib. Data backend is paused, so the dashboard detects that and replays a dated snapshot of real data rather than erroring |
 | **[Neural Canvas](https://github.com/Danny-397/neural-canvas)** · [live](https://danny-397.github.io/neural-canvas/) | Paint glowing light in mid-air with your hands — MediaPipe hand tracking, 100% in-browser | Built for **Hack the Arts 2026** |
+
+---
+
+### Outside my own repos
+
+**[Farama-Foundation/Gymnasium#1657](https://github.com/Farama-Foundation/Gymnasium/pull/1657)** —
+traced an `AsyncVectorEnv` crash on autoreset to scalar substitution in the
+worker, wrote the fix and a regression test (+85/−3), and argued from
+`SyncVectorEnv`'s behaviour that it was a bug rather than a restriction.
+A maintainer closed it as an environment bug instead. I still think the
+asymmetry between the two vector envs is worth fixing, but their call —
+and reading that codebase well enough to make the argument was the point.
 
 ---
 
