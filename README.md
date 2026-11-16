@@ -1,44 +1,68 @@
-# Dan Lichtenberger
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+  <img alt="Dan Lichtenberger, New York. I build systems that make a measurable claim, and then I try to break the claim. Six projects deployed, 1,827 tests in CI, three negative results reported." src="assets/banner-light.svg" width="100%">
+</picture>
 
-**New York** · Building systems that make a measurable claim — then trying to break the claim.
+<p align="center">
+  <a href="https://danny-397.github.io"><b>Portfolio</b></a> &nbsp;·&nbsp;
+  <a href="https://danny-397.github.io/reports.html"><b>Technical reports</b></a> &nbsp;·&nbsp;
+  <a href="https://danny-397.github.io/reports/verification-ledger.html"><b>Verification ledger</b></a>
+</p>
 
-Six projects, written May–August 2026, every one deployed to a live URL you can open right now.
-Three of them report a **null or negative result**, because that's what the data said.
+Six projects, built May to November 2026, each deployed to a URL you can open right now. Each one makes a claim with a number attached, and each has a test whose job is to break that claim. Three of them didn't beat their baseline, and they say so, with confidence intervals. Every figure below links back to how it was measured.
 
-📊 **[danny-397.github.io](https://danny-397.github.io)** — all six projects, with the method behind each one
-📄 **[Technical reports](https://danny-397.github.io/reports.html)** — one per project
+<br>
 
----
+<a href="https://rl-for-crypto-and-stocks.vercel.app"><img src="assets/01-rl-trader.svg" width="100%" alt="How RL Agents Fool You: PPO from scratch tested across thirty seeds. A +275% single run was luck: 2 of 30 crypto seeds and 0 of 300 stock runs beat buy-and-hold."></a>
 
-### Selected work
+**[Live lab](https://rl-for-crypto-and-stocks.vercel.app)** · [Source](https://github.com/Danny-397/RL-for-Crypto-and-stocks-) · [Paper](https://danny-397.github.io/reports/rl-trader-paper.html) · [DOI 10.5281/zenodo.23843503](https://doi.org/10.5281/zenodo.23843503) &nbsp;—&nbsp; PyTorch, Gymnasium; predictions pre-registered before the runs, 505 tests
 
-| Project | What it is | Result |
-|---|---|---|
-| **[QuantumSafe Scan](https://github.com/Danny-397/Quantum-Safe-Scan)** · [live](https://quantumsafescan.com) | Finds cryptography quantum computers will break, across 11 languages, and maps each finding to its NIST FIPS 203/204/205 replacement | **100% precision** vs. a 49.1% naive-regex baseline on a labeled benchmark; on [PyPI](https://pypi.org/project/quantumsafe-scan/), exports SARIF + CycloneDX CBOM |
-| **[RL Chess Engine](https://github.com/Danny-397/RL-Chess-Engine)** · [live](https://rlchess.xyz) | AlphaZero-style engine given only the rules, learning from self-play. Play the trained net in your browser | 10× more self-play bought **14 Elo**. Diagnosed as a *signal* problem, not compute: reweighting self-play moved Elo-vs-random **−21 → +28** at the same compute |
-| **[RL-Trader](https://github.com/Danny-397/RL-for-Crypto-and-stocks-)** · [live](https://rl-for-crypto-and-stocks.vercel.app) | PPO written from the algorithm up, framed as a study of how deep-RL overfits and how you measure it honestly | A single seed showed **+275%**. Across 5 seeds it was **−2.7% [−31%, +27%]** — the edge was the seed. Domain randomization is what actually fixed it |
-| **[AlphaGlyph](https://github.com/Danny-397/Alphaglyph)** · [live](https://alphaglyph.org) | Backtesting lab that runs its own results through Monte Carlo, Deflated Sharpe, and Fama-French | Built the instrument that indicts its own output: reports a **72% probability of backtest overfitting** on its own strategy grid |
-| **[Tradeski](https://github.com/Danny-397/Tradeski)** · [live](https://tradeski.dev) | Full-stack analytics: WebSocket streaming, indicator engine, LLM analyst grounded in your actual holdings + Fed macro data | Every indicator hand-rolled on raw NumPy — no TA-Lib. Data backend is paused, so the dashboard detects that and replays a dated snapshot of real data rather than erroring |
-| **[Neural Canvas](https://github.com/Danny-397/neural-canvas)** · [live](https://danny-397.github.io/neural-canvas/) | Paint glowing light in mid-air with your hands — MediaPipe hand tracking, 100% in-browser | Built for **Hack the Arts 2026** |
+<br>
 
----
+<a href="https://quantumsafescan.com"><img src="assets/02-quantumsafe.svg" width="100%" alt="QuantumSafe Scan: finds quantum-vulnerable cryptography in 11 languages. 93% precision on randomly sampled real-world findings, 88% recall on held-out real code, 584 tests."></a>
 
-### Outside my own repos
+**[Scan your code](https://quantumsafescan.com)** · [Source](https://github.com/Danny-397/Quantum-Safe-Scan) · [`pip install quantumsafe-scan`](https://pypi.org/project/quantumsafe-scan/) · [GitHub Action](https://github.com/marketplace/actions/quantumsafe-scanner) · [Report](https://danny-397.github.io/reports/quantumsafe-technical-report.html) · [DOI](https://doi.org/10.5281/zenodo.23843488) &nbsp;—&nbsp; exports SARIF and CycloneDX CBOM; Shor's algorithm demonstrated in Qiskit
 
-**[Farama-Foundation/Gymnasium#1657](https://github.com/Farama-Foundation/Gymnasium/pull/1657)** —
-traced an `AsyncVectorEnv` crash on autoreset to scalar substitution in the
-worker, wrote the fix and a regression test (+85/−3), and argued from
-`SyncVectorEnv`'s behaviour that it was a bug rather than a restriction.
-A maintainer closed it as an environment bug instead. I still think the
-asymmetry between the two vector envs is worth fixing, but their call —
-and reading that codebase well enough to make the argument was the point.
+<br>
 
----
+<a href="https://alphaglyph.org"><img src="assets/03-alphaglyph.svg" width="100%" alt="AlphaGlyph: a backtesting lab that attacks its own results. 72% probability that its best backtest is overfit; its forecaster scores an AUC of 0.51, a coin flip, and says so. 367 tests."></a>
+
+**[Run a backtest](https://alphaglyph.org)** · [Source](https://github.com/Danny-397/Alphaglyph) · [Report](https://danny-397.github.io/reports/alphaglyph-technical-report.html) &nbsp;—&nbsp; Deflated Sharpe, CPCV, Fama-French; a 106k-parameter transformer served as ONNX in 512 MB
+
+<br>
+
+<a href="https://rlchess.xyz"><img src="assets/04-chess.svg" width="100%" alt="AlphaZero-style chess engine written from scratch: network, tree search and self-play. 1,000 self-play games; its self-play collapses into threefold repetition. The result is being re-measured across three seeds."></a>
+
+**[Play the engine](https://rlchess.xyz/#play)** · [Source](https://github.com/Danny-397/RL-Chess-Engine) · [Report](https://danny-397.github.io/reports/rl-chess-technical-report.html) · [Experiments](https://danny-397.github.io/reports/rl-chess-experiment-results.html) &nbsp;—&nbsp; PUCT search, ResNet policy/value net, runs client-side in ONNX Runtime Web
+
+<br>
+
+<a href="https://www.tradeski.dev"><img src="assets/05-tradeski.svg" width="100%" alt="Tradeski: a real-time market dashboard with an assistant grounded in your holdings. 79% on held-out assistant eval questions, every indicator hand-coded on NumPy, 321 tests."></a>
+
+**[Open the dashboard](https://www.tradeski.dev)** · [Source](https://github.com/Danny-397/Tradeski) · [Assistant eval](https://github.com/Danny-397/Tradeski/blob/main/docs/ski-eval/README.md) · [Report](https://danny-397.github.io/reports/tradeski-technical-report.html) &nbsp;—&nbsp; WebSockets, FRED macro data, Claude Haiku with nine tools and a check on every figure it quotes
+
+<br>
+
+<a href="https://danny-397.github.io/neural-canvas/"><img src="assets/06-neural-canvas.svg" width="100%" alt="Neural Canvas, built for Hack the Arts 2026: paint glowing light in mid-air with your hands. 21 hand landmarks tracked about 60 times a second, on-device, in one HTML file."></a>
+
+**[Paint with your hands](https://danny-397.github.io/neural-canvas/)** · [Source](https://github.com/Danny-397/neural-canvas) · [Report](https://danny-397.github.io/reports/neural-canvas-technical-report.html) &nbsp;—&nbsp; MediaPipe, one-euro filtering, six-fold symmetry, no build step
+
+<br>
 
 ### How I work
 
-- **Every project ships to a real URL.** A repository nobody can run isn't evidence of anything.
-- **I write the falsification test before I trust the result.** AlphaGlyph exists mostly to attack my own backtests.
-- **Negative results get reported.** Three of the six above didn't beat their baseline, and they say so, with confidence intervals.
+- **Ship it.** A repository nobody can run isn't evidence of anything, so every project has a live URL.
+- **Try to break the result before trusting it.** Held-out test sets are written before the fixes. Predictions are committed before the runs. AlphaGlyph exists mostly to attack my own backtests.
+- **Report what the data said.** When a headline number doesn't survive more seeds or a fairer comparison, I withdraw it in public and keep the correction on the page.
 
-`Python` · `PyTorch` · `Flask` · `JavaScript` · `Postgres` · `Docker` · `GitHub Actions`
+### Outside my own repos
+
+**[Farama-Foundation/Gymnasium#1657](https://github.com/Farama-Foundation/Gymnasium/pull/1657)**: I traced an `AsyncVectorEnv` crash on autoreset to scalar substitution in the worker, then wrote a fix and a regression test (+85/−3). I argued from `SyncVectorEnv`'s behaviour that it was a library bug. A maintainer closed it as an environment bug instead. I still think the two vector envs should behave the same, but it was their call, and learning that codebase well enough to make the case was worth it.
+
+<br>
+
+<p align="center">
+  <code>Python</code> · <code>PyTorch</code> · <code>NumPy</code> · <code>Flask</code> · <code>FastAPI</code> · <code>JavaScript</code> · <code>ONNX</code> · <code>Qiskit</code> · <code>Postgres</code> · <code>Docker</code> · <code>GitHub Actions</code>
+</p>
+
+<sub>Cards are generated by <a href="tools/build_cards.py"><code>tools/build_cards.py</code></a> from the figures in each project's own docs and CI.</sub>
