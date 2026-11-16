@@ -21,7 +21,7 @@ Six projects, built May to November 2026, each deployed to a URL you can open ri
 
 <br>
 
-<a href="https://quantumsafescan.com"><picture><source media="(max-width: 600px)" srcset="assets/02-quantumsafe-tall.svg"><img src="assets/02-quantumsafe.svg" width="100%" alt="QuantumSafe Scan: finds quantum-vulnerable cryptography in 11 languages. 93% precision on randomly sampled real-world findings, 88% recall on held-out real code, 584 tests."></picture></a>
+<a href="https://quantumsafescan.com"><picture><source media="(max-width: 600px)" srcset="assets/02-quantumsafe-tall.svg"><img src="assets/02-quantumsafe.svg" width="100%" alt="QuantumSafe Scan: finds quantum-vulnerable cryptography in 11 languages. 95% precision on randomly sampled real-world findings, 88% recall on held-out real code, 584 tests."></picture></a>
 
 **[Scan your code](https://quantumsafescan.com)** · [Source](https://github.com/Danny-397/Quantum-Safe-Scan) · [PyPI](https://pypi.org/project/quantumsafe-scan/) · [GitHub Action](https://github.com/marketplace/actions/quantumsafe-scanner) · [Report](https://danny-397.github.io/reports/quantumsafe-technical-report.html) · [DOI](https://doi.org/10.5281/zenodo.23843488) &nbsp;—&nbsp; exports SARIF and CycloneDX CBOM; Shor's algorithm demonstrated in Qiskit
 

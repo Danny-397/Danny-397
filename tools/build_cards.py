@@ -204,7 +204,7 @@ def quantumsafe():
          title="QuantumSafe Scan",
          desc=["Finds the cryptography quantum computers will break, in 11",
                "languages, and names the NIST replacement for every finding."],
-         stats=[("93%", "precision, real code", 190), ("88%", "recall, held-out code", 200),
+         stats=[("95%", "precision, real code", 190), ("88%", "recall, held-out code", 200),
                 ("584", "tests in CI", 120)],
          visual="".join(v), css=css)
 
