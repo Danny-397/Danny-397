@@ -83,6 +83,62 @@ def card(*, slug, palette, eyebrow, title, desc, stats, visual, css="", defs="")
     body.append(visual)
     body.append("</svg>")
     (OUT / f"{slug}.svg").write_text("\n".join(body), encoding="utf-8")
+    tall_card(slug=slug, palette=p, eyebrow=eyebrow, title=title, desc=desc, stats=stats,
+              visual=visual, css=css, defs=defs)
+
+
+def wrap(words: str, limit: int) -> list[str]:
+    lines, line = [], ""
+    for w in words.split():
+        if line and len(line) + 1 + len(w) > limit:
+            lines.append(line)
+            line = w
+        else:
+            line = f"{line} {w}".strip()
+    return lines + [line]
+
+
+TW = 600
+
+
+def tall_card(*, slug, palette, eyebrow, title, desc, stats, visual, css, defs):
+    """The same card stacked for phones: text first at a larger size, the visual below.
+
+    The wide card is 1000 units across, so on a 390px phone its body text renders
+    at about 6px. This one is 600 across with bigger type, about 11px there.
+    """
+    p = palette
+    lines = wrap(" ".join(desc), 47)
+    y_desc = 142
+    y_stats = y_desc + (len(lines) - 1) * 27 + 52
+    y_div = y_stats + (len(stats) - 1) * 40 + 30
+    h = y_div + 240
+    out = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{TW}" height="{h}" viewBox="0 0 {TW} {h}" '
+        f'role="img" aria-labelledby="title-{slug}">',
+        f'<title id="title-{slug}">{escape(title)}</title>',
+        f"<style>{BASE_CSS}{css}</style>",
+        f"<defs>{defs}</defs>",
+        f'<rect x=".5" y=".5" width="{TW - 1}" height="{h - 1}" rx="18" fill="{p["bg"]}" stroke="{p["edge"]}"/>',
+        f'<rect x="18" y=".5" width="{TW - 36}" height="1" fill="{p["accent"]}" opacity=".55"/>',
+        f'<g class="r" style="animation-delay:.05s">{t(32, 50, eyebrow, 13.5, p["accent"], MONO, 600, extra="letter-spacing=\"1.2\"")}</g>',
+        f'<g class="r" style="animation-delay:.12s">{t(32, 100, title, 37, p["ink"], SERIF, 600)}</g>',
+    ]
+    for i, line in enumerate(lines):
+        out.append(f'<g class="r" style="animation-delay:{.2 + i * .05:.2f}s">{t(32, y_desc + i * 27, line, 19.5, p["muted"])}</g>')
+    for i, (value, label, _) in enumerate(stats):
+        strike = value.startswith("-x-")
+        value = value.removeprefix("-x-")
+        y = y_stats + i * 40
+        g = [t(32, y, value, 28, p["muted"] if strike else p["accent"], SANS, 700)]
+        if strike:
+            g.append(f'<line x1="30" y1="{y - 10}" x2="{32 + len(value) * 16}" y2="{y - 10}" stroke="{p["muted"]}" stroke-width="2"/>')
+        g.append(t(176, y - 2, label, 16, p["muted"], MONO))
+        out.append(f'<g class="r" style="animation-delay:{.35 + i * .08:.2f}s">{"".join(g)}</g>')
+    out.append(f'<rect x="28" y="{y_div}" width="{TW - 56}" height="1" fill="{p["edge"]}"/>')
+    out.append(f'<g transform="translate(-500 {y_div - 12})">{visual}</g>')
+    out.append("</svg>")
+    (OUT / f"{slug}-tall.svg").write_text("\n".join(out), encoding="utf-8")
 
 
 # --------------------------------------------------------------------------- 01
@@ -312,12 +368,12 @@ def neural_canvas():
 
 
 # --------------------------------------------------------------------------- banner
-def banner(theme):
+def banner(theme, tall=False):
     dark = theme == "dark"
     bg, edge = ("#0d1117", "#30363d") if dark else ("#ffffff", "#d0d7de")
     ink, muted = ("#e6edf3", "#9198a1") if dark else ("#1f2328", "#59636e")
     accent, faint = ("#7ee787", "#3d444d") if dark else ("#1a7f37", "#d8dee4")
-    bw, bh = 1000, 300
+    bw, bh = (600, 560) if tall else (1000, 300)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{bw}" height="{bh}" viewBox="0 0 {bw} {bh}" role="img" '
            f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: systems that make a measurable claim, then try to break it</title>',
            f"<style>{BASE_CSS}.d {{ animation: draw 2.2s cubic-bezier(.4,0,.2,1) both; }}</style>",
@@ -325,6 +381,7 @@ def banner(theme):
     # right-hand motif: thirty faint seed runs and the one that looks like a discovery
     rng = random.Random(42)
     x0, x1, base = 600, 904, 176
+    motif_at = len(out)
     out.append(f'<line x1="{x0}" y1="{base}" x2="{x1}" y2="{base}" stroke="{muted}" stroke-dasharray="3 5" stroke-opacity=".7"/>')
     out.append(t(x1 + 10, base + 4, "baseline", 12, muted, MONO))
     for k in range(31):
@@ -344,6 +401,23 @@ def banner(theme):
             out.append(f'<path class="d" style="--len:520;animation-delay:{.2 + k * .02:.2f}s" d="{path}" fill="none" '
                        f'stroke="{faint}" stroke-width="1.2" stroke-dasharray="520"/>')
     out.append(f'<g class="f" style="animation-delay:1.2s">{t(x0, 46, "30 seeds, and the one you would publish", 12, muted, MONO)}</g>')
+    if tall:  # the motif goes under the text, scaled up a little
+        motif = out[motif_at:]
+        del out[motif_at:]
+        out.append(f'<g transform="translate(32 {bh - 250}) scale(1.25) translate(-600 -30)">{"".join(motif)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.05s">{t(32, 58, "NEW YORK · MAY–NOVEMBER 2026", 14, accent, MONO, 600, extra="letter-spacing=\"1.6\"")}</g>')
+        out.append(f'<g class="r" style="animation-delay:.12s">{t(30, 118, "Dan Lichtenberger", 56, ink, SERIF, 600)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build systems that make a measurable", 22, muted)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "claim, and then I try to break the claim.", 22, muted)}</g>')
+        x = 32
+        for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,827", "tests in CI", 175),
+                                            ("3", "negative results", 230))):
+            out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 254, val, 30, ink, SANS, 700)}'
+                       f'{t(x, 280, lab, 15, muted, MONO)}</g>')
+            x += w
+        out.append("</svg>")
+        (OUT / f"banner-{theme}-tall.svg").write_text("\n".join(out), encoding="utf-8")
+        return
     out.append(f'<g class="r" style="animation-delay:.05s">{t(48, 64, "NEW YORK · MAY–NOVEMBER 2026", 12.5, accent, MONO, 600, extra="letter-spacing=\"1.8\"")}</g>')
     out.append(f'<g class="r" style="animation-delay:.12s">{t(46, 122, "Dan Lichtenberger", 54, ink, SERIF, 600)}</g>')
     out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build systems that make a measurable claim,", 19, muted)}</g>')
@@ -362,6 +436,7 @@ if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
     for build in (rl_trader, quantumsafe, alphaglyph, chess, tradeski, neural_canvas):
         build()
-    banner("dark")
-    banner("light")
+    for theme in ("dark", "light"):
+        banner(theme)
+        banner(theme, tall=True)
     print("wrote", ", ".join(sorted(f.name for f in OUT.glob("*.svg"))))
