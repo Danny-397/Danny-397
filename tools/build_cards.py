@@ -178,11 +178,6 @@ def rl_trader():
 def quantumsafe():
     p = dict(bg="#0d1117", edge="#232a35", ink="#e6edf3", muted="#9aa6b5", accent="#8ea0f2")
     v = []
-    # lattice dot field
-    for gx in range(16):
-        for gy in range(9):
-            x, y = 640 + gx * 21.5, 44 + gy * 21.5
-            v.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.3" fill="#5b73e8" fill-opacity=".28"/>')
     # scan frame corner brackets, from the logo
     for (x, y, dx, dy) in ((632, 36, 1, 1), (968, 36, -1, 1), (632, 222, 1, -1), (968, 222, -1, -1)):
         v.append(f'<path d="M{x} {y + 18 * dy} V{y} H{x + 18 * dx}" fill="none" stroke="{p["accent"]}" stroke-width="2"/>')
