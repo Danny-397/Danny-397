@@ -33,7 +33,7 @@ Six projects, built May to November 2026, each deployed to a URL you can open ri
 
 <br>
 
-<a href="https://rlchess.xyz"><picture><source media="(max-width: 600px)" srcset="assets/04-chess-tall.svg"><img src="assets/04-chess.svg" width="100%" alt="AlphaZero-style chess engine written from scratch: network, tree search and self-play. 1,000 self-play games; its self-play collapses into threefold repetition. The result is being re-measured across three seeds."></picture></a>
+<a href="https://rlchess.xyz"><picture><source media="(max-width: 600px)" srcset="assets/04-chess-tall.svg"><img src="assets/04-chess.svg" width="100%" alt="AlphaZero-style chess engine written from scratch: network, tree search and self-play. 1,000 self-play games; its self-play collapses into threefold repetition, and across three seeds training leaves it 93 Elo worse than its random start."></picture></a>
 
 **[Play the engine](https://rlchess.xyz/#play)** · [Source](https://github.com/Danny-397/RL-Chess-Engine) · [Report](https://danny-397.github.io/reports/rl-chess-technical-report.html) · [Experiments](https://danny-397.github.io/reports/rl-chess-experiment-results.html) &nbsp;—&nbsp; PUCT search, ResNet policy/value net, runs client-side in ONNX Runtime Web
 
