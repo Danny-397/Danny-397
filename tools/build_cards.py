@@ -284,9 +284,9 @@ def chess():
          eyebrow="04 · PLAY IT YOURSELF · REINFORCEMENT LEARNING",
          title="AlphaZero-style Chess Engine",
          desc=["Network, tree search and self-play from scratch, no openings or",
-               "human games. Then: why its self-play collapses into draws."],
-         stats=[("1,000", "self-play games", 170), ("4,672", "move logits", 160),
-                ("3 seeds", "result re-measured", 200)],
+               "human games. Then: why training in its draw cycle makes it worse."],
+         stats=[("1,000", "self-play games", 170), ("−93", "Elo vs its start, 3 seeds", 230),
+                ("4,672", "move logits", 160)],
          visual="".join(v), defs=defs)
 
 
