@@ -405,7 +405,7 @@ def banner(theme, tall=False):
         out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build systems that make a measurable", 22, muted)}</g>')
         out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "claim, and then I try to break the claim.", 22, muted)}</g>')
         x = 32
-        for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,827", "tests in CI", 175),
+        for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,830", "tests in CI", 175),
                                             ("3", "negative results", 230))):
             out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 254, val, 30, ink, SANS, 700)}'
                        f'{t(x, 280, lab, 15, muted, MONO)}</g>')
@@ -418,7 +418,7 @@ def banner(theme, tall=False):
     out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build systems that make a measurable claim,", 19, muted)}</g>')
     out.append(f'<g class="r" style="animation-delay:.25s">{t(48, 186, "and then I try to break the claim.", 19, muted)}</g>')
     x = 48
-    for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,827", "tests in CI", 140),
+    for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,830", "tests in CI", 140),
                                         ("3", "negative results, reported", 230))):
         out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 244, val, 26, ink, SANS, 700)}'
                    f'{t(x, 266, lab, 12.5, muted, MONO)}</g>')
