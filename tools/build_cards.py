@@ -26,15 +26,6 @@ MONO = "'Cascadia Mono','SFMono-Regular',ui-monospace,Consolas,'Liberation Mono'
 
 W, H = 1000, 250
 
-# Per-seed excess return over buy-and-hold (%), 30 seeds each, from the RL
-# Trader depth study as plotted on danny-397.github.io (seed 100-129).
-RL_CRYPTO = [-52, -80, -77, -67, -73, -52, -23, -38, -29, -59, 68, -43, -69, 18, -82,
-             -63, -12, -74, -82, -27, -55, -89, -74, -73, -71, -26, -76, -16, -53, -76]
-RL_STOCKS = [-269, -284, -261, -264, -284, -272, -276, -253, -233, -265, -280, -273, -283,
-             -260, -255, -275, -277, -251, -287, -282, -231, -267, -280, -286, -286, -278,
-             -266, -291, -253, -259]
-
-
 def t(x, y, s, size, fill, family=SANS, weight=400, anchor="start", extra=""):
     return (f'<text x="{x}" y="{y}" font-family="{family}" font-size="{size}" '
             f'font-weight="{weight}" fill="{fill}" text-anchor="{anchor}" {extra}>{escape(s)}</text>')
@@ -144,33 +135,40 @@ def tall_card(*, slug, palette, eyebrow, title, desc, stats, visual, css, defs):
 # --------------------------------------------------------------------------- 01
 def rl_trader():
     p = dict(bg="#0a0b0c", edge="#26282c", ink="#eef0f2", muted="#9ba2ab", accent="#d4ff3f")
-    x0, x1, lo, hi = 640, 964, -300, 100
-
-    def sx(v):
-        return x0 + (v - lo) / (hi - lo) * (x1 - x0)
-
+    x0, x1 = 640, 964
     rng = random.Random(7)
     v = []
-    zero = sx(0)
-    v.append(f'<line x1="{zero:.1f}" y1="50" x2="{zero:.1f}" y2="206" stroke="{p["accent"]}" stroke-width="1.5" stroke-dasharray="3 4"/>')
-    v.append(t(zero, 40, "buy-and-hold", 12, p["accent"], MONO, anchor="middle"))
-    for tick in (-300, -200, -100, 0, 100):
-        v.append(t(sx(tick), 226, f"{tick:+d}%" if tick else "0", 11.5, p["muted"], MONO, anchor="middle"))
-    for row, (name, vals, y) in enumerate((("crypto · 30 seeds", RL_CRYPTO, 98), ("stocks · 30 seeds", RL_STOCKS, 168))):
-        v.append(t(x0, y - 26, name, 12, p["muted"], MONO))
-        for i, val in enumerate(vals):
-            beat = val > 0
-            cy = y + rng.uniform(-11, 11)
-            d = .5 + (row * 30 + i) * .025
-            v.append(f'<circle class="f" style="animation-delay:{d:.3f}s" cx="{sx(val):.1f}" cy="{cy:.1f}" r="4.2" '
-                     f'fill="{p["accent"] if beat else "#5d636b"}" fill-opacity="{1 if beat else .85}"/>')
-    card(slug="01-rl-trader", palette=p,
-         eyebrow="01 · RESEARCH STUDY · REINFORCEMENT LEARNING",
-         title="How RL Agents Fool You",
-         desc=["PPO with GAE written from scratch, then one question: does an",
-               "agent that looks brilliant once survive being run thirty times?"],
-         stats=[("-x-+275%", "one lucky run", 150), ("2 / 30", "crypto seeds beat holding", 230),
-                ("0 / 300", "stock runs beat it", 190)],
+    base = 128
+    v.append(t(x0, 40, "30 seeds per experiment", 12, p["muted"], MONO))
+    runs = []
+    for k in range(30):
+        y, pts = base, []
+        for i in range(40):
+            y += rng.gauss(-.35, 3.0)
+            pts.append((x0 + i * (x1 - x0) / 39, y))
+        runs.append(pts)
+    xs = [runs[0][i][0] for i in range(40)]
+    lo_ = [min(r[i][1] for r in runs) for i in range(40)]
+    hi_ = [max(r[i][1] for r in runs) for i in range(40)]
+    band = ("M" + " L".join(f"{xs[i]:.1f} {hi_[i]:.1f}" for i in range(40)) + " L"
+            + " L".join(f"{xs[i]:.1f} {lo_[i]:.1f}" for i in reversed(range(40))) + " Z")
+    v.append(f'<path class="f" style="animation-delay:.3s" d="{band}" fill="{p["accent"]}" fill-opacity=".07"/>')
+    for k, pts in enumerate(runs):
+        path = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in pts)
+        v.append(f'<path class="d" style="--len:420;animation-delay:{.3 + k * .02:.2f}s" d="{path}" fill="none" '
+                 f'stroke="#5d636b" stroke-opacity=".55" stroke-width="1.1" stroke-dasharray="420"/>')
+    mean = [sum(r[i][1] for r in runs) / 30 for i in range(40)]
+    mpath = "M" + " L".join(f"{xs[i]:.1f} {mean[i]:.1f}" for i in range(40))
+    v.append(f'<path class="d" style="--len:420;animation-delay:1s" d="{mpath}" fill="none" stroke="{p["accent"]}" '
+             f'stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="420"/>')
+    v.append(t(x1, 226, "mean across seeds", 12, p["accent"], MONO, anchor="end"))
+    card(slug="02-rl-trader", palette=p,
+         eyebrow="02 · RESEARCH PAPER · REINFORCEMENT LEARNING",
+         title="RL Trader",
+         desc=["Deep RL written from scratch, and a published paper on telling",
+               "an agent that learned from one that got lucky."],
+         stats=[("30", "seeds per experiment", 190), ("19 yrs", "of SPY, option hedging", 230),
+                ("505", "tests in CI", 120)],
          visual="".join(v))
 
 
@@ -194,8 +192,8 @@ def quantumsafe():
   .scan { animation: scan 3.2s ease-in-out .4s infinite; opacity: 0; }
   @media (prefers-reduced-motion: reduce) { .scan { display: none; } }
 """
-    card(slug="02-quantumsafe", palette=p,
-         eyebrow="02 · SHIPPED PRODUCT · POST-QUANTUM SECURITY",
+    card(slug="01-quantumsafe", palette=p,
+         eyebrow="01 · SHIPPED PRODUCT · POST-QUANTUM SECURITY",
          title="QuantumSafe Scan",
          desc=["Finds the cryptography quantum computers will break, in 11",
                "languages, and names the NIST replacement for every finding."],
@@ -227,26 +225,21 @@ def alphaglyph():
              f'stroke-linejoin="round" stroke-dasharray="260" stroke-dashoffset="0"/>')
     v.append(f'<path class="f" style="animation-delay:1.3s" d="{path2}" fill="none" stroke="#7d8682" stroke-width="2" '
              f'stroke-dasharray="4 4" stroke-linejoin="round"/>')
-    # PBO meter
-    mx, mw = 640, 324
-    v.append(t(mx, 186, "probability of backtest overfitting", 11.5, p["muted"], MONO))
-    v.append(f'<rect x="{mx}" y="196" width="{mw}" height="8" rx="4" fill="#1b1e1d"/>')
-    v.append(f'<rect class="m" x="{mx}" y="196" width="{mw * .72:.1f}" height="8" rx="4" fill="{p["accent"]}"/>')
-    v.append(f'<line x1="{mx + mw / 2}" y1="190" x2="{mx + mw / 2}" y2="210" stroke="{p["ink"]}" stroke-opacity=".6"/>')
-    v.append(t(mx + mw / 2, 226, "coin flip", 11, p["muted"], MONO, anchor="middle"))
-    v.append(t(mx + mw, 186, "72%", 12, p["accent"], MONO, 700, anchor="end"))
+    for i, m in enumerate(("Deflated Sharpe", "PBO", "CPCV", "walk-forward")):
+        v.append(f'<g class="f" style="animation-delay:{1.4 + i * .1:.2f}s">'
+                 f'<rect x="{[640, 764, 814, 872][i]}" y="196" width="{[118, 44, 52, 92][i]}" height="24" rx="5" '
+                 f'fill="#141716" stroke="#2a302e"/>'
+                 f'{t([640, 764, 814, 872][i] + [118, 44, 52, 92][i] / 2, 212, m, 11, p["accent"], MONO, anchor="middle")}</g>')
     css = """
   .d { animation: draw 1.3s cubic-bezier(.4,0,.2,1) .4s both; }
-  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  .m { transform-origin: 640px 0; animation: grow 1.1s cubic-bezier(.2,.7,.2,1) 1.5s both; }
 """
-    card(slug="03-alphaglyph", palette=p,
-         eyebrow="03 · STATISTICAL RIGOR · QUANTITATIVE FINANCE",
+    card(slug="04-alphaglyph", palette=p,
+         eyebrow="04 · STATISTICAL RIGOR · QUANTITATIVE FINANCE",
          title="AlphaGlyph",
-         desc=["A backtesting lab that treats its own results as wrong until",
-               "they survive Deflated Sharpe, PBO and walk-forward testing."],
-         stats=[("72%", "best backtest overfit", 210), ("0.51", "forecast AUC, stated", 200),
-                ("367", "tests in CI", 120)],
+         desc=["A backtesting lab with overfitting detection built in: Deflated",
+               "Sharpe, PBO and walk-forward tests on every strategy."],
+         stats=[("106k", "param transformer", 190), ("512 MB", "served as ONNX", 200),
+                ("374", "tests in CI", 120)],
          visual="".join(v), css=css)
 
 
@@ -268,25 +261,15 @@ def chess():
         v.append(f'<text x="{bx + c * s + s / 2}" y="{by + r * s + s * .8}" font-size="19" text-anchor="middle" '
                  f'font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif" fill="{col}" {stroke}>{g}</text>')
 
-    # the repetition: the white queen shuttles between two squares, forever
-    def cxy(r, c):
-        return bx + c * s + s / 2, by + r * s + s / 2
-
-    (ax, ay), (zx, zy) = cxy(5, 4), cxy(3, 6)
-    v.append(f'<path d="M{ax} {ay} Q{ax + 34} {ay - 6} {zx} {zy}" fill="none" stroke="#e05a3a" stroke-width="2.4" '
-             f'stroke-linecap="round" marker-end="url(#ah)" class="f" style="animation-delay:.8s"/>')
-    v.append(f'<path d="M{zx} {zy} Q{zx - 40} {zy + 4} {ax} {ay}" fill="none" stroke="#e05a3a" stroke-width="2.4" '
-             f'stroke-linecap="round" stroke-dasharray="4 4" marker-end="url(#ah)" class="f" style="animation-delay:1.1s"/>')
-    v.append(t(bx + s * 4, by + s * 8 + 26, "threefold repetition, again", 11.5, p["muted"], MONO, anchor="middle"))
-    defs = ('<marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto">'
-            '<path d="M0 0 L10 5 L0 10 z" fill="#e05a3a"/></marker>')
-    card(slug="04-chess", palette=p,
-         eyebrow="04 · PLAY IT YOURSELF · REINFORCEMENT LEARNING",
+    v.append(t(bx + s * 4, by + s * 8 + 26, "plays in your browser, on-device", 11.5, p["muted"], MONO, anchor="middle"))
+    defs = ""
+    card(slug="05-chess", palette=p,
+         eyebrow="05 · PLAY IT YOURSELF · REINFORCEMENT LEARNING",
          title="AlphaZero-style Chess Engine",
-         desc=["Network, tree search and self-play from scratch, no openings or",
-               "human games. Then: why training in its draw cycle makes it worse."],
-         stats=[("1,000", "self-play games", 170), ("−93", "Elo vs its start, 3 seeds", 230),
-                ("4,672", "move logits", 160)],
+         desc=["Neural network, tree search and self-play written from scratch,",
+               "learning with no opening books and no human games."],
+         stats=[("1,000", "self-play games", 170), ("4,672", "move logits", 170),
+                ("59", "tests in CI", 120)],
          visual="".join(v), defs=defs)
 
 
@@ -314,13 +297,13 @@ def tradeski():
              f'{t(706, 170, "portfolio_what_if · get_quote", 11, p["muted"], MONO)}'
              f'{t(676, 192, "Bottom line: trimming TSLA lowers your", 13, p["ink"])}'
              f'{t(676, 210, "beta. Every figure checked against the data.", 13, p["ink"])}</g>')
-    card(slug="05-tradeski", palette=p,
-         eyebrow="05 · REAL-TIME INFRASTRUCTURE · LLM TOOLS",
+    card(slug="03-tradeski", palette=p,
+         eyebrow="03 · REAL-TIME INFRASTRUCTURE · LLM TOOLS",
          title="Tradeski",
          desc=["A streaming market dashboard with an assistant that reasons",
                "about your actual holdings, and checks every figure it quotes."],
          stats=[("79%", "assistant eval, held-out", 220), ("0", "TA libraries used", 160),
-                ("321", "tests in CI", 120)],
+                ("343", "tests in CI", 120)],
          visual="".join(v))
 
 
@@ -370,7 +353,7 @@ def banner(theme, tall=False):
     accent, faint = ("#7ee787", "#3d444d") if dark else ("#1a7f37", "#d8dee4")
     bw, bh = (600, 560) if tall else (1000, 300)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{bw}" height="{bh}" viewBox="0 0 {bw} {bh}" role="img" '
-           f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: systems that make a measurable claim, then try to break it</title>',
+           f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: machine learning and security software, shipped and measured</title>',
            f"<style>{BASE_CSS}.d {{ animation: draw 2.2s cubic-bezier(.4,0,.2,1) both; }}</style>",
            f'<rect x=".5" y=".5" width="{bw - 1}" height="{bh - 1}" rx="18" fill="{bg}" stroke="{edge}"/>']
     # right-hand motif: thirty faint seed runs and the one that looks like a discovery
@@ -391,35 +374,34 @@ def banner(theme, tall=False):
                        f'stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="520"/>')
             ex, ey = pts[-1]
             out.append(f'<circle class="f" style="animation-delay:2.9s" cx="{ex:.1f}" cy="{ey:.1f}" r="4.5" fill="{accent}"/>')
-            out.append(f'<g class="f" style="animation-delay:3s">{t(ex - 10, ey - 12, "one run", 12, accent, MONO, 600, anchor="end")}</g>')
         else:
             out.append(f'<path class="d" style="--len:520;animation-delay:{.2 + k * .02:.2f}s" d="{path}" fill="none" '
                        f'stroke="{faint}" stroke-width="1.2" stroke-dasharray="520"/>')
-    out.append(f'<g class="f" style="animation-delay:1.2s">{t(x0, 46, "30 seeds, and the one you would publish", 12, muted, MONO)}</g>')
+    out.append(f'<g class="f" style="animation-delay:1.2s">{t(x0, 46, "every result tested across 30 training runs", 12, muted, MONO)}</g>')
     if tall:  # the motif goes under the text, scaled up a little
         motif = out[motif_at:]
         del out[motif_at:]
         out.append(f'<g transform="translate(32 {bh - 250}) scale(1.25) translate(-600 -30)">{"".join(motif)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.05s">{t(32, 58, "NEW YORK · MAY–NOVEMBER 2026", 14, accent, MONO, 600, extra="letter-spacing=\"1.6\"")}</g>')
+        out.append(f'<g class="r" style="animation-delay:.05s">{t(32, 58, "NEW YORK", 14, accent, MONO, 600, extra="letter-spacing=\"1.6\"")}</g>')
         out.append(f'<g class="r" style="animation-delay:.12s">{t(30, 118, "Dan Lichtenberger", 56, ink, SERIF, 600)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build systems that make a measurable", 22, muted)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "claim, and then I try to break the claim.", 22, muted)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build machine learning and security", 22, muted)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "software, ship it, and measure that it works.", 22, muted)}</g>')
         x = 32
         for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,865", "tests in CI", 175),
-                                            ("3", "negative results", 230))):
+                                            ("2", "releases with DOIs", 230))):
             out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 254, val, 30, ink, SANS, 700)}'
                        f'{t(x, 280, lab, 15, muted, MONO)}</g>')
             x += w
         out.append("</svg>")
         (OUT / f"banner-{theme}-tall.svg").write_text("\n".join(out), encoding="utf-8")
         return
-    out.append(f'<g class="r" style="animation-delay:.05s">{t(48, 64, "NEW YORK · MAY–NOVEMBER 2026", 12.5, accent, MONO, 600, extra="letter-spacing=\"1.8\"")}</g>')
+    out.append(f'<g class="r" style="animation-delay:.05s">{t(48, 64, "NEW YORK", 12.5, accent, MONO, 600, extra="letter-spacing=\"1.8\"")}</g>')
     out.append(f'<g class="r" style="animation-delay:.12s">{t(46, 122, "Dan Lichtenberger", 54, ink, SERIF, 600)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build systems that make a measurable claim,", 19, muted)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.25s">{t(48, 186, "and then I try to break the claim.", 19, muted)}</g>')
+    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build machine learning and security software,", 19, muted)}</g>')
+    out.append(f'<g class="r" style="animation-delay:.25s">{t(48, 186, "ship it, and measure that it really works.", 19, muted)}</g>')
     x = 48
     for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,865", "tests in CI", 140),
-                                        ("3", "negative results, reported", 230))):
+                                        ("2", "releases with DOIs", 230))):
         out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 244, val, 26, ink, SANS, 700)}'
                    f'{t(x, 266, lab, 12.5, muted, MONO)}</g>')
         x += w
@@ -429,7 +411,7 @@ def banner(theme, tall=False):
 
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
-    for build in (rl_trader, quantumsafe, alphaglyph, chess, tradeski, neural_canvas):
+    for build in (quantumsafe, rl_trader, tradeski, alphaglyph, chess, neural_canvas):
         build()
     for theme in ("dark", "light"):
         banner(theme)
