@@ -2,7 +2,7 @@
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/banner-dark-tall.svg">
   <source media="(max-width: 600px)" srcset="assets/banner-light-tall.svg">
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-  <img alt="Dan Lichtenberger, New York. I build systems that make a measurable claim, and then I try to break the claim. Six projects deployed, 1,859 tests in CI, three negative results reported." src="assets/banner-light.svg" width="100%">
+  <img alt="Dan Lichtenberger, New York. I build systems that make a measurable claim, and then I try to break the claim. Six projects deployed, 1,865 tests in CI, three negative results reported." src="assets/banner-light.svg" width="100%">
 </picture>
 
 <p align="center">
