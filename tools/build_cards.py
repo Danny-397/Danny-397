@@ -346,46 +346,49 @@ def neural_canvas():
 
 
 # --------------------------------------------------------------------------- banner
+# (name, hook, colour on dark, colour on light), in README order
+PROJECTS = [
+    ("QuantumSafe Scan", "on PyPI · 11 languages", "#8ea0f2", "#4f63c9"),
+    ("RL Trader", "paper with a DOI", "#d4ff3f", "#5f7a00"),
+    ("Tradeski", "live AI assistant", "#5b9bff", "#2f6fdb"),
+    ("AlphaGlyph", "overfitting detector", "#3fb950", "#1a7f37"),
+    ("Chess engine", "learns by self-play", "#c9a368", "#946b2d"),
+    ("Neural Canvas", "hand-tracked art", "#bab1f6", "#6e5fd6"),
+]
+
+
 def banner(theme, tall=False):
     dark = theme == "dark"
     bg, edge = ("#0d1117", "#30363d") if dark else ("#ffffff", "#d0d7de")
     ink, muted = ("#e6edf3", "#9198a1") if dark else ("#1f2328", "#59636e")
-    accent, faint = ("#7ee787", "#3d444d") if dark else ("#1a7f37", "#d8dee4")
-    bw, bh = (600, 560) if tall else (1000, 300)
+    accent = "#7ee787" if dark else "#1a7f37"
+    tile = "#161b22" if dark else "#f6f8fa"
+    bw, bh = (600, 672) if tall else (1000, 300)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{bw}" height="{bh}" viewBox="0 0 {bw} {bh}" role="img" '
-           f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: machine learning and security software, shipped and measured</title>',
+           f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: machine learning, post-quantum security and quant finance, built from scratch and shipped</title>',
            f"<style>{BASE_CSS}.d {{ animation: draw 2.2s cubic-bezier(.4,0,.2,1) both; }}</style>",
            f'<rect x=".5" y=".5" width="{bw - 1}" height="{bh - 1}" rx="18" fill="{bg}" stroke="{edge}"/>']
-    # right-hand motif: thirty faint seed runs and the one that looks like a discovery
-    rng = random.Random(42)
-    x0, x1, base = 600, 904, 176
-    motif_at = len(out)
-    out.append(f'<line x1="{x0}" y1="{base}" x2="{x1}" y2="{base}" stroke="{muted}" stroke-dasharray="3 5" stroke-opacity=".7"/>')
-    out.append(t(x1 + 10, base + 4, "baseline", 12, muted, MONO))
-    for k in range(31):
-        y, pts = base, []
-        lucky = k == 30
-        for i in range(46):
-            y += rng.gauss(-2.0 if lucky else .2, 4.4 if lucky else 3.2)
-            pts.append((x0 + i * (x1 - x0) / 45, y))
-        path = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in pts)
-        if lucky:
-            out.append(f'<path class="d" style="--len:520;animation-delay:.9s" d="{path}" fill="none" stroke="{accent}" '
-                       f'stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="520"/>')
-            ex, ey = pts[-1]
-            out.append(f'<circle class="f" style="animation-delay:2.9s" cx="{ex:.1f}" cy="{ey:.1f}" r="4.5" fill="{accent}"/>')
-        else:
-            out.append(f'<path class="d" style="--len:520;animation-delay:{.2 + k * .02:.2f}s" d="{path}" fill="none" '
-                       f'stroke="{faint}" stroke-width="1.2" stroke-dasharray="520"/>')
-    out.append(f'<g class="f" style="animation-delay:1.2s">{t(x0, 46, "every result tested across 30 training runs", 12, muted, MONO)}</g>')
+    # right-hand motif: the six projects, each in its own card's colour
+    tiles_at = len(out)
+    gx, gy, tw, th, gap = 592, 34, 179, 70, 10
+    for i, (name, hook, dark_c, light_c) in enumerate(PROJECTS):
+        col, row = i % 2, i // 2
+        x, y = gx + col * (tw + gap), gy + row * (th + gap)
+        c = dark_c if dark else light_c
+        out.append(f'<g class="r" style="animation-delay:{.3 + i * .07:.2f}s">'
+                   f'<rect x="{x}" y="{y}" width="{tw}" height="{th}" rx="10" fill="{tile}" stroke="{edge}"/>'
+                   f'<rect x="{x}" y="{y + 14}" width="3" height="{th - 28}" rx="1.5" fill="{c}"/>'
+                   f'{t(x + 16, y + 22, f"{i + 1:02d}", 11, c, MONO, 700)}'
+                   f'{t(x + 16, y + 43, name, 16, ink, SERIF, 600)}'
+                   f'{t(x + 16, y + 60, hook, 11.5, muted, MONO)}</g>')
     if tall:  # the motif goes under the text, scaled up a little
-        motif = out[motif_at:]
-        del out[motif_at:]
-        out.append(f'<g transform="translate(32 {bh - 250}) scale(1.25) translate(-600 -30)">{"".join(motif)}</g>')
+        motif = out[tiles_at:]
+        del out[tiles_at:]
+        out.append(f'<g transform="translate(32 318) scale(1.4) translate(-592 -34)">{"".join(motif)}</g>')
         out.append(f'<g class="r" style="animation-delay:.05s">{t(32, 58, "NEW YORK", 14, accent, MONO, 600, extra="letter-spacing=\"1.6\"")}</g>')
         out.append(f'<g class="r" style="animation-delay:.12s">{t(30, 118, "Dan Lichtenberger", 56, ink, SERIF, 600)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build machine learning and security", 22, muted)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "software, ship it, and measure that it works.", 22, muted)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "Machine learning, post-quantum security and", 22, ink)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "quant finance, built from scratch and shipped.", 22, ink)}</g>')
         x = 32
         for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,865", "tests in CI", 175),
                                             ("2", "releases with DOIs", 230))):
@@ -397,8 +400,8 @@ def banner(theme, tall=False):
         return
     out.append(f'<g class="r" style="animation-delay:.05s">{t(48, 64, "NEW YORK", 12.5, accent, MONO, 600, extra="letter-spacing=\"1.8\"")}</g>')
     out.append(f'<g class="r" style="animation-delay:.12s">{t(46, 122, "Dan Lichtenberger", 54, ink, SERIF, 600)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build machine learning and security software,", 19, muted)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.25s">{t(48, 186, "ship it, and measure that it really works.", 19, muted)}</g>')
+    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "Machine learning, post-quantum security and", 19.5, ink)}</g>')
+    out.append(f'<g class="r" style="animation-delay:.25s">{t(48, 186, "quant finance, built from scratch and shipped.", 19.5, ink)}</g>')
     x = 48
     for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,865", "tests in CI", 140),
                                         ("2", "releases with DOIs", 230))):
