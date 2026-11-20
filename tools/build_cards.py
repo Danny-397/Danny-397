@@ -155,13 +155,23 @@ def rl_trader():
     v.append(f'<path class="f" style="animation-delay:.3s" d="{band}" fill="{p["accent"]}" fill-opacity=".07"/>')
     for k, pts in enumerate(runs):
         path = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in pts)
-        v.append(f'<path class="d" style="--len:420;animation-delay:{.3 + k * .02:.2f}s" d="{path}" fill="none" '
+        v.append(f'<path class="rr" style="--len:420;animation-delay:{k * .13:.2f}s" d="{path}" fill="none" '
                  f'stroke="#5d636b" stroke-opacity=".55" stroke-width="1.1" stroke-dasharray="420"/>')
     mean = [sum(r[i][1] for r in runs) / 30 for i in range(40)]
     mpath = "M" + " L".join(f"{xs[i]:.1f} {mean[i]:.1f}" for i in range(40))
     v.append(f'<path class="d" style="--len:420;animation-delay:1s" d="{mpath}" fill="none" stroke="{p["accent"]}" '
              f'stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="420"/>')
+    v.append(f'<circle class="mv" r="4.5" fill="{p["accent"]}">'
+             f'<animateMotion dur="7s" begin="1s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.6;1" '
+             f'calcMode="linear" path="{mpath}"/></circle>')
     v.append(t(x1, 226, "mean across seeds", 12, p["accent"], MONO, anchor="end"))
+    css = """
+  .d { animation: draw 1.3s cubic-bezier(.4,0,.2,1) both; }
+  @keyframes rerun { 0% { stroke-dashoffset: var(--len); opacity: 1; } 45% { stroke-dashoffset: 0; opacity: 1; }
+                     85% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+  .rr { animation: rerun 7s cubic-bezier(.4,0,.2,1) infinite backwards; }
+  @media (prefers-reduced-motion: reduce) { .mv { display: none; } }
+"""
     card(slug="02-rl-trader", palette=p,
          eyebrow="02 · RESEARCH PAPER · REINFORCEMENT LEARNING",
          title="RL Trader",
@@ -169,7 +179,7 @@ def rl_trader():
                "an agent that learned from one that got lucky."],
          stats=[("30", "seeds per experiment", 190), ("19 yrs", "of SPY, option hedging", 230),
                 ("505", "tests in CI", 120)],
-         visual="".join(v))
+         visual="".join(v), css=css)
 
 
 # --------------------------------------------------------------------------- 02
@@ -229,9 +239,22 @@ def alphaglyph():
         v.append(f'<g class="f" style="animation-delay:{1.4 + i * .1:.2f}s">'
                  f'<rect x="{[640, 764, 814, 872][i]}" y="196" width="{[118, 44, 52, 92][i]}" height="24" rx="5" '
                  f'fill="#141716" stroke="#2a302e"/>'
+                 f'<rect class="chip" style="animation-delay:{2 + i * 1.5:.1f}s" x="{[640, 764, 814, 872][i]}" y="196" '
+                 f'width="{[118, 44, 52, 92][i]}" height="24" rx="5" fill="{p["accent"]}" stroke="{p["accent"]}"/>'
                  f'{t([640, 764, 814, 872][i] + [118, 44, 52, 92][i] / 2, 212, m, 11, p["accent"], MONO, anchor="middle")}</g>')
+    v.append(f'<g class="sweep"><line x1="640" y1="54" x2="640" y2="176" stroke="{p["accent"]}" stroke-opacity=".7"/>'
+             f'<rect x="640" y="54" width="22" height="122" fill="url(#trail)"/></g>')
+    defs = (f'<linearGradient id="trail" x1="1" x2="0"><stop offset="0" stop-color="{p["accent"]}" stop-opacity=".14"/>'
+            f'<stop offset="1" stop-color="{p["accent"]}" stop-opacity="0"/></linearGradient>')
     css = """
   .d { animation: draw 1.3s cubic-bezier(.4,0,.2,1) .4s both; }
+  @keyframes sweep { 0% { transform: translateX(0); opacity: 0; } 6% { opacity: 1; }
+                     88% { opacity: 1; } 100% { transform: translateX(320px); opacity: 0; } }
+  .sweep { animation: sweep 6s cubic-bezier(.45,0,.55,1) 1.6s infinite; opacity: 0; }
+  .sweep rect { transform: translateX(-22px); }
+  @keyframes chip { 0% { opacity: 0; } 4% { opacity: .2; } 22% { opacity: .2; } 27% { opacity: 0; } 100% { opacity: 0; } }
+  .chip { animation: chip 6s ease-in-out infinite; opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .sweep { display: none; } }
 """
     card(slug="04-alphaglyph", palette=p,
          eyebrow="04 · STATISTICAL RIGOR · QUANTITATIVE FINANCE",
@@ -240,7 +263,7 @@ def alphaglyph():
                "Sharpe, PBO and walk-forward tests on every strategy."],
          stats=[("106k", "param transformer", 190), ("512 MB", "served as ONNX", 200),
                 ("374", "tests in CI", 120)],
-         visual="".join(v), css=css)
+         visual="".join(v), css=css, defs=defs)
 
 
 # --------------------------------------------------------------------------- 04
@@ -254,15 +277,28 @@ def chess():
             fill = "#e7cd9c" if (r + c) % 2 == 0 else "#9b6842"
             v.append(f'<rect x="{bx + c * s}" y="{by + r * s}" width="{s}" height="{s}" fill="{fill}"/>')
     pieces = {(0, 6): ("♚", 0), (1, 5): ("♟", 0), (1, 6): ("♟", 0), (1, 7): ("♟", 0), (2, 3): ("♛", 0),
-              (7, 1): ("♚", 1), (6, 0): ("♟", 1), (6, 1): ("♟", 1), (5, 4): ("♛", 1)}
+              (7, 1): ("♚", 1), (6, 0): ("♟", 1), (6, 1): ("♟", 1)}
+    # the engine's move: the white queen e3 -> g5, highlighted the way the live site does
+    for (r, c) in ((5, 4), (3, 6)):
+        v.append(f'<rect class="hl" x="{bx + c * s}" y="{by + r * s}" width="{s}" height="{s}" fill="#e2b33c"/>')
     for (r, c), (g, white) in pieces.items():
         col = "#fff7e6" if white else "#1d140e"
         stroke = 'stroke="#1d140e" stroke-width=".9" paint-order="stroke"' if white else ""
         v.append(f'<text x="{bx + c * s + s / 2}" y="{by + r * s + s * .8}" font-size="19" text-anchor="middle" '
                  f'font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif" fill="{col}" {stroke}>{g}</text>')
 
+    v.append(f'<g class="q"><text x="{bx + 4 * s + s / 2}" y="{by + 5 * s + s * .8}" font-size="19" text-anchor="middle" '
+             f'font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif" fill="#fff7e6" '
+             f'stroke="#1d140e" stroke-width=".9" paint-order="stroke">♛</text></g>')
     v.append(t(bx + s * 4, by + s * 8 + 26, "plays in your browser, on-device", 11.5, p["muted"], MONO, anchor="middle"))
     defs = ""
+    css = f"""
+  @keyframes qmove {{ 0%, 30% {{ transform: translate(0, 0); }} 45%, 80% {{ transform: translate({2 * s}px, {-2 * s}px); }}
+                      95%, 100% {{ transform: translate(0, 0); }} }}
+  .q {{ animation: qmove 5s cubic-bezier(.5,0,.3,1) 1s infinite; }}
+  @keyframes hl {{ 0%, 25% {{ opacity: 0; }} 35%, 85% {{ opacity: .55; }} 95%, 100% {{ opacity: 0; }} }}
+  .hl {{ animation: hl 5s ease-in-out 1s infinite; opacity: 0; }}
+"""
     card(slug="05-chess", palette=p,
          eyebrow="05 · PLAY IT YOURSELF · REINFORCEMENT LEARNING",
          title="AlphaZero-style Chess Engine",
@@ -270,7 +306,7 @@ def chess():
                "learning with no opening books and no human games."],
          stats=[("1,000", "self-play games", 170), ("4,672", "move logits", 170),
                 ("59", "tests in CI", 120)],
-         visual="".join(v), defs=defs)
+         visual="".join(v), defs=defs, css=css)
 
 
 # --------------------------------------------------------------------------- 05
@@ -287,16 +323,32 @@ def tradeski():
         col = "#16a34a" if up else "#ef4444"
         cx = x + i * 13.5
         d = .5 + i * .03
-        v.append(f'<g class="f" style="animation-delay:{d:.2f}s"><line x1="{cx + 3.5}" y1="{lo_:.1f}" x2="{cx + 3.5}" y2="{hi_:.1f}" '
+        live = ' class="live"' if i == 23 else ""
+        v.append(f'<g class="f" style="animation-delay:{d:.2f}s"><g{live}><line x1="{cx + 3.5}" y1="{lo_:.1f}" x2="{cx + 3.5}" y2="{hi_:.1f}" '
                  f'stroke="{col}" stroke-width="1.2"/><rect x="{cx}" y="{min(o, c):.1f}" width="7" '
-                 f'height="{max(abs(c - o), 1.2):.1f}" fill="{col}"/></g>')
+                 f'height="{max(abs(c - o), 1.2):.1f}" fill="{col}"/></g></g>')
         price = c
     # assistant reply card
     v.append(f'<g class="r" style="animation-delay:1.3s"><rect x="660" y="146" width="300" height="76" rx="10" fill="#16181b" stroke="#2a2e34"/>'
              f'{t(676, 170, "Ski", 12, p["accent"], MONO, 700)}'
              f'{t(706, 170, "portfolio_what_if · get_quote", 11, p["muted"], MONO)}'
              f'{t(676, 192, "Bottom line: trimming TSLA lowers your", 13, p["ink"])}'
-             f'{t(676, 210, "beta. Every figure checked against the data.", 13, p["ink"])}</g>')
+             f'{t(676, 210, "beta. Every figure checked against the data.", 13, p["ink"])}'
+             f'<g clip-path="url(#reply)"><rect class="cover c1" x="672" y="179" width="284" height="18" fill="#16181b"/>'
+             f'<rect class="cover c2" x="672" y="197" width="284" height="18" fill="#16181b"/></g></g>')
+    v.append(f'<g class="f" style="animation-delay:.8s"><circle class="blink" cx="921" cy="36" r="3.5" fill="#16a34a"/>'
+             f'{t(964, 40, "LIVE", 11.5, p["muted"], MONO, 700, anchor="end")}</g>')
+    css = """
+  @keyframes live { 0%, 100% { transform: scaleY(1); } 30% { transform: scaleY(1.7); } 60% { transform: scaleY(.6); } }
+  .live { transform-box: fill-box; transform-origin: 50% 50%; animation: live 2.4s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  .blink { animation: blink 1.6s ease-in-out infinite; }
+  @keyframes type1 { 0%, 8% { transform: translateX(0); } 38%, 100% { transform: translateX(284px); } }
+  @keyframes type2 { 0%, 38% { transform: translateX(0); } 70%, 100% { transform: translateX(284px); } }
+  .c1 { animation: type1 7s steps(38) 1.6s infinite; }
+  .c2 { animation: type2 7s steps(44) 1.6s infinite; }
+  @media (prefers-reduced-motion: reduce) { .cover { display: none; } }
+"""
     card(slug="03-tradeski", palette=p,
          eyebrow="03 · REAL-TIME INFRASTRUCTURE · LLM TOOLS",
          title="Tradeski",
@@ -304,7 +356,8 @@ def tradeski():
                "about your actual holdings, and checks every figure it quotes."],
          stats=[("79%", "assistant eval, held-out", 220), ("0", "TA libraries used", 160),
                 ("343", "tests in CI", 120)],
-         visual="".join(v))
+         visual="".join(v), css=css,
+         defs='<clipPath id="reply"><rect x="661" y="147" width="298" height="74" rx="9"/></clipPath>')
 
 
 # --------------------------------------------------------------------------- 06
@@ -325,13 +378,16 @@ def neural_canvas():
     for k in range(6):
         v.append(f'<path d="{d}" transform="rotate({k * 60})" fill="none" stroke="{colors[k]}" stroke-width="3" '
                  f'stroke-linecap="round" class="d" style="--len:240;animation-delay:{.4 + k * .12:.2f}s" stroke-dasharray="240"/>')
+    # the fingertip, painting the first stroke (the other five are its mirror images)
+    v.append(f'<circle r="5" fill="#fff" fill-opacity=".9"><animateMotion dur="7s" begin=".4s" repeatCount="indefinite" '
+             f'keyPoints="0;1;1" keyTimes="0;.4;1" calcMode="linear" path="{d}"/></circle>')
     v.append("</g>")
-    # a hand's 21 landmarks, faint, at the stroke's origin
-    v.append(f'<circle cx="{cx}" cy="{cy}" r="5" fill="#fff" fill-opacity=".9" filter="url(#glow)"/>')
     defs = ('<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2" result="b"/>'
             '<feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
     css = f"""
-  .d {{ animation: draw 1.6s cubic-bezier(.4,0,.2,1) both; }}
+  @keyframes paint {{ 0% {{ stroke-dashoffset: var(--len); opacity: 1; }} 40% {{ stroke-dashoffset: 0; opacity: 1; }}
+                     82% {{ stroke-dashoffset: 0; opacity: 1; }} 100% {{ stroke-dashoffset: 0; opacity: 0; }} }}
+  .d {{ animation: paint 7s cubic-bezier(.4,0,.2,1) infinite backwards; }}
   @keyframes spin {{ to {{ transform: translate({cx}px, {cy}px) rotate(360deg); }} }}
   .spin {{ transform: translate({cx}px, {cy}px); animation: spin 90s linear infinite; }}
 """
@@ -347,6 +403,15 @@ def neural_canvas():
 
 # --------------------------------------------------------------------------- banner
 # (name, hook, colour on dark, colour on light), in README order
+# what the rotating line under the name says, and which tiles it lights up
+PHRASES = [
+    ("machine learning.", (1, 4), "#d4ff3f", "#5f7a00"),
+    ("post-quantum security.", (0,), "#8ea0f2", "#4f63c9"),
+    ("quantitative finance.", (2, 3), "#3fb950", "#1a7f37"),
+    ("interactive art.", (5,), "#bab1f6", "#6e5fd6"),
+]
+CYCLE = 12  # seconds for all four phrases
+
 PROJECTS = [
     ("QuantumSafe Scan", "on PyPI · 11 languages", "#8ea0f2", "#4f63c9"),
     ("RL Trader", "paper with a DOI", "#d4ff3f", "#5f7a00"),
@@ -357,6 +422,17 @@ PROJECTS = [
 ]
 
 
+BANNER_CSS = f"""
+  @keyframes ph {{ 0% {{ opacity: 0; transform: translateY(10px); }} 4% {{ opacity: 1; transform: none; }}
+                  22% {{ opacity: 1; transform: none; }} 25% {{ opacity: 0; transform: translateY(-10px); }}
+                  100% {{ opacity: 0; transform: translateY(-10px); }} }}
+  .ph {{ opacity: 0; animation: ph {CYCLE}s cubic-bezier(.2,.7,.2,1) infinite backwards; }}
+  @keyframes lit {{ 0% {{ opacity: 0; }} 4% {{ opacity: 1; }} 22% {{ opacity: 1; }} 25% {{ opacity: 0; }} 100% {{ opacity: 0; }} }}
+  .lit {{ opacity: 0; animation: lit {CYCLE}s ease-in-out infinite backwards; }}
+  @media (prefers-reduced-motion: reduce) {{ .ph0 {{ opacity: 1; }} }}
+"""
+
+
 def banner(theme, tall=False):
     dark = theme == "dark"
     bg, edge = ("#0d1117", "#30363d") if dark else ("#ffffff", "#d0d7de")
@@ -365,8 +441,8 @@ def banner(theme, tall=False):
     tile = "#161b22" if dark else "#f6f8fa"
     bw, bh = (600, 672) if tall else (1000, 300)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{bw}" height="{bh}" viewBox="0 0 {bw} {bh}" role="img" '
-           f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: machine learning, post-quantum security and quant finance, built from scratch and shipped</title>',
-           f"<style>{BASE_CSS}.d {{ animation: draw 2.2s cubic-bezier(.4,0,.2,1) both; }}</style>",
+           f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: I build and ship, from scratch, machine learning, post-quantum security, quantitative finance and interactive art</title>',
+           f"<style>{BASE_CSS}{BANNER_CSS}</style>",
            f'<rect x=".5" y=".5" width="{bw - 1}" height="{bh - 1}" rx="18" fill="{bg}" stroke="{edge}"/>']
     # right-hand motif: the six projects, each in its own card's colour
     tiles_at = len(out)
@@ -380,15 +456,25 @@ def banner(theme, tall=False):
                    f'<rect x="{x}" y="{y + 14}" width="3" height="{th - 28}" rx="1.5" fill="{c}"/>'
                    f'{t(x + 16, y + 22, f"{i + 1:02d}", 11, c, MONO, 700)}'
                    f'{t(x + 16, y + 43, name, 16, ink, SERIF, 600)}'
-                   f'{t(x + 16, y + 60, hook, 11.5, muted, MONO)}</g>')
+                   f'{t(x + 16, y + 60, hook, 11.5, muted, MONO)}'
+                   + "".join(f'<rect class="lit" style="animation-delay:{.8 + k * CYCLE / 4:.1f}s" x="{x}" y="{y}" width="{tw}" '
+                             f'height="{th}" rx="10" fill="{c}" fill-opacity=".07" stroke="{c}" stroke-width="1.5"/>'
+                             for k, (_, idx, _, _) in enumerate(PHRASES) if i in idx)
+                   + '</g>')
+
+    def phrases(x, y, size):
+        return "".join(f'<text class="ph{" ph0" if k == 0 else ""}" style="animation-delay:{.8 + k * CYCLE / 4:.1f}s" '
+                       f'x="{x}" y="{y}" font-family="{SERIF}" font-size="{size}" font-style="italic" font-weight="600" '
+                       f'fill="{dc if dark else lc}">{escape(ph)}</text>'
+                       for k, (ph, _, dc, lc) in enumerate(PHRASES))
     if tall:  # the motif goes under the text, scaled up a little
         motif = out[tiles_at:]
         del out[tiles_at:]
         out.append(f'<g transform="translate(32 318) scale(1.4) translate(-592 -34)">{"".join(motif)}</g>')
         out.append(f'<g class="r" style="animation-delay:.05s">{t(32, 58, "NEW YORK", 14, accent, MONO, 600, extra="letter-spacing=\"1.6\"")}</g>')
         out.append(f'<g class="r" style="animation-delay:.12s">{t(30, 118, "Dan Lichtenberger", 56, ink, SERIF, 600)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "Machine learning, post-quantum security and", 22, ink)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.25s">{t(32, 192, "quant finance, built from scratch and shipped.", 22, ink)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build and ship, from scratch,", 22, ink)}</g>')
+        out.append(phrases(32, 198, 30))
         x = 32
         for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,865", "tests in CI", 175),
                                             ("2", "releases with DOIs", 230))):
@@ -400,8 +486,8 @@ def banner(theme, tall=False):
         return
     out.append(f'<g class="r" style="animation-delay:.05s">{t(48, 64, "NEW YORK", 12.5, accent, MONO, 600, extra="letter-spacing=\"1.8\"")}</g>')
     out.append(f'<g class="r" style="animation-delay:.12s">{t(46, 122, "Dan Lichtenberger", 54, ink, SERIF, 600)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "Machine learning, post-quantum security and", 19.5, ink)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.25s">{t(48, 186, "quant finance, built from scratch and shipped.", 19.5, ink)}</g>')
+    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build and ship, from scratch,", 20, ink)}</g>')
+    out.append(phrases(48, 194, 28))
     x = 48
     for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,865", "tests in CI", 140),
                                         ("2", "releases with DOIs", 230))):
