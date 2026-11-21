@@ -178,7 +178,7 @@ def rl_trader():
          desc=["Deep RL written from scratch, and a published paper on telling",
                "an agent that learned from one that got lucky."],
          stats=[("30", "seeds per experiment", 190), ("19 yrs", "of SPY, option hedging", 230),
-                ("505", "tests in CI", 120)],
+                ("506", "tests in CI", 120)],
          visual="".join(v), css=css)
 
 
@@ -262,7 +262,7 @@ def alphaglyph():
          desc=["A backtesting lab with overfitting detection built in: Deflated",
                "Sharpe, PBO and walk-forward tests on every strategy."],
          stats=[("106k", "param transformer", 190), ("512 MB", "served as ONNX", 200),
-                ("374", "tests in CI", 120)],
+                ("377", "tests in CI", 120)],
          visual="".join(v), css=css, defs=defs)
 
 
@@ -305,7 +305,7 @@ def chess():
          desc=["Neural network, tree search and self-play written from scratch,",
                "learning with no opening books and no human games."],
          stats=[("1,000", "self-play games", 170), ("4,672", "move logits", 170),
-                ("59", "tests in CI", 120)],
+                ("61", "tests in CI", 120)],
          visual="".join(v), defs=defs, css=css)
 
 
@@ -355,7 +355,7 @@ def tradeski():
          desc=["A streaming market dashboard with an assistant that reasons",
                "about your actual holdings, and checks every figure it quotes."],
          stats=[("79%", "assistant eval, held-out", 220), ("0", "TA libraries used", 160),
-                ("343", "tests in CI", 120)],
+                ("344", "tests in CI", 120)],
          visual="".join(v), css=css,
          defs='<clipPath id="reply"><rect x="661" y="147" width="298" height="74" rx="9"/></clipPath>')
 
@@ -475,7 +475,7 @@ def banner(theme, tall=False):
         out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 132, "I build and ship, from scratch,", 22, ink)}</g>')
         out.append(phrases(32, 168, 30))
         x = 32
-        for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,865", "tests in CI", 175),
+        for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,872", "tests in CI", 175),
                                             ("2", "releases with DOIs", 230))):
             out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 224, val, 30, ink, SANS, 700)}'
                        f'{t(x, 250, lab, 15, muted, MONO)}</g>')
@@ -487,7 +487,7 @@ def banner(theme, tall=False):
     out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 134, "I build and ship, from scratch,", 20, ink)}</g>')
     out.append(phrases(48, 168, 28))
     x = 48
-    for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,865", "tests in CI", 140),
+    for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,872", "tests in CI", 140),
                                         ("2", "releases with DOIs", 230))):
         out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 218, val, 26, ink, SANS, 700)}'
                    f'{t(x, 240, lab, 12.5, muted, MONO)}</g>')
