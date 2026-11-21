@@ -2,7 +2,7 @@
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/banner-dark-tall.svg">
   <source media="(max-width: 600px)" srcset="assets/banner-light-tall.svg">
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-  <img alt="Dan Lichtenberger. I build and ship, from scratch, machine learning, post-quantum security, quantitative finance and interactive art. Six projects deployed, 1,865 tests in CI, two releases archived with DOIs. Projects: QuantumSafe Scan (on PyPI, 11 languages), RL Trader (paper with a DOI), Tradeski (live AI assistant), AlphaGlyph (overfitting detector), a chess engine that learns by self-play, and Neural Canvas (hand-tracked art)." src="assets/banner-light.svg" width="100%">
+  <img alt="Dan Lichtenberger. I build and ship, from scratch, machine learning, post-quantum security, quantitative finance and interactive art. Six projects deployed, 1,872 tests in CI, two releases archived with DOIs. Projects: QuantumSafe Scan (on PyPI, 11 languages), RL Trader (paper with a DOI), Tradeski (live AI assistant), AlphaGlyph (overfitting detector), a chess engine that learns by self-play, and Neural Canvas (hand-tracked art)." src="assets/banner-light.svg" width="100%">
 </picture>
 
 <p align="center">
