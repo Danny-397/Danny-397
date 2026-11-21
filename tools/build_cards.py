@@ -439,7 +439,7 @@ def banner(theme, tall=False):
     ink, muted = ("#e6edf3", "#9198a1") if dark else ("#1f2328", "#59636e")
     accent = "#7ee787" if dark else "#1a7f37"
     tile = "#161b22" if dark else "#f6f8fa"
-    bw, bh = (600, 672) if tall else (1000, 300)
+    bw, bh = (600, 642) if tall else (1000, 300)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{bw}" height="{bh}" viewBox="0 0 {bw} {bh}" role="img" '
            f'aria-labelledby="bt"><title id="bt">Dan Lichtenberger: I build and ship, from scratch, machine learning, post-quantum security, quantitative finance and interactive art</title>',
            f"<style>{BASE_CSS}{BANNER_CSS}</style>",
@@ -470,29 +470,27 @@ def banner(theme, tall=False):
     if tall:  # the motif goes under the text, scaled up a little
         motif = out[tiles_at:]
         del out[tiles_at:]
-        out.append(f'<g transform="translate(32 318) scale(1.4) translate(-592 -34)">{"".join(motif)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.05s">{t(32, 58, "NEW YORK", 14, accent, MONO, 600, extra="letter-spacing=\"1.6\"")}</g>')
-        out.append(f'<g class="r" style="animation-delay:.12s">{t(30, 118, "Dan Lichtenberger", 56, ink, SERIF, 600)}</g>')
-        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 162, "I build and ship, from scratch,", 22, ink)}</g>')
-        out.append(phrases(32, 198, 30))
+        out.append(f'<g transform="translate(32 288) scale(1.4) translate(-592 -34)">{"".join(motif)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.12s">{t(30, 88, "Dan Lichtenberger", 56, ink, SERIF, 600)}</g>')
+        out.append(f'<g class="r" style="animation-delay:.2s">{t(32, 132, "I build and ship, from scratch,", 22, ink)}</g>')
+        out.append(phrases(32, 168, 30))
         x = 32
         for i, (val, lab, w) in enumerate((("6 / 6", "deployed", 150), ("1,865", "tests in CI", 175),
                                             ("2", "releases with DOIs", 230))):
-            out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 254, val, 30, ink, SANS, 700)}'
-                       f'{t(x, 280, lab, 15, muted, MONO)}</g>')
+            out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 224, val, 30, ink, SANS, 700)}'
+                       f'{t(x, 250, lab, 15, muted, MONO)}</g>')
             x += w
         out.append("</svg>")
         (OUT / f"banner-{theme}-tall.svg").write_text("\n".join(out), encoding="utf-8")
         return
-    out.append(f'<g class="r" style="animation-delay:.05s">{t(48, 64, "NEW YORK", 12.5, accent, MONO, 600, extra="letter-spacing=\"1.8\"")}</g>')
-    out.append(f'<g class="r" style="animation-delay:.12s">{t(46, 122, "Dan Lichtenberger", 54, ink, SERIF, 600)}</g>')
-    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 160, "I build and ship, from scratch,", 20, ink)}</g>')
-    out.append(phrases(48, 194, 28))
+    out.append(f'<g class="r" style="animation-delay:.12s">{t(46, 96, "Dan Lichtenberger", 54, ink, SERIF, 600)}</g>')
+    out.append(f'<g class="r" style="animation-delay:.2s">{t(48, 134, "I build and ship, from scratch,", 20, ink)}</g>')
+    out.append(phrases(48, 168, 28))
     x = 48
     for i, (val, lab, w) in enumerate((("6 / 6", "projects deployed", 160), ("1,865", "tests in CI", 140),
                                         ("2", "releases with DOIs", 230))):
-        out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 244, val, 26, ink, SANS, 700)}'
-                   f'{t(x, 266, lab, 12.5, muted, MONO)}</g>')
+        out.append(f'<g class="r" style="animation-delay:{.4 + i * .08:.2f}s">{t(x, 218, val, 26, ink, SANS, 700)}'
+                   f'{t(x, 240, lab, 12.5, muted, MONO)}</g>')
         x += w
     out.append("</svg>")
     (OUT / f"banner-{theme}.svg").write_text("\n".join(out), encoding="utf-8")
