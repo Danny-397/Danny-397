@@ -213,49 +213,113 @@ def quantumsafe():
 
 
 # --------------------------------------------------------------------------- 03
+def _mulberry32(seed):
+    """The site's seeded generator (frontend/backtest-preview.js), bit for bit."""
+    state = [seed & 0xFFFFFFFF]
+
+    def imul(a, b):
+        return (a * b) & 0xFFFFFFFF
+
+    def r():
+        state[0] = (state[0] + 0x6D2B79F5) & 0xFFFFFFFF
+        s_ = state[0]
+        t_ = imul(s_ ^ (s_ >> 15), 1 | s_)
+        t_ = ((t_ + imul(t_ ^ (t_ >> 7), 61 | t_)) & 0xFFFFFFFF) ^ t_
+        return ((t_ ^ (t_ >> 14)) & 0xFFFFFFFF) / 4294967296
+    return r
+
+
+def _backtest_example():
+    """The example backtest AlphaGlyph plays before a first run: same seed, same series."""
+    r = _mulberry32(20261637)
+
+    def gauss():
+        a = r()
+        return math.sqrt(-2 * math.log(a + 1e-12)) * math.cos(2 * math.pi * r())
+    n, cap = 252, 100000.0
+    spy, strat = [cap], [cap]
+    for i in range(1, n):
+        mkt = 0.00035 + 0.0095 * gauss()
+        spy.append(spy[-1] * (1 + mkt))
+        strat.append(strat[-1] * (1 + 0.00025 + 0.8 * mkt + 0.0062 * gauss()))
+    trades = []
+    for b in range(0, n - 29, 32):
+        lo = hi = b
+        for k in range(b, b + 30):
+            if strat[k] < strat[lo]:
+                lo = k
+            if strat[k] > strat[hi]:
+                hi = k
+        if hi > lo + 3:
+            trades += [(lo, True), (hi, False)]
+    peak, dd, rets = cap, 0.0, []
+    for k in range(1, n):
+        peak = max(peak, strat[k])
+        dd = max(dd, 1 - strat[k] / peak)
+        rets.append(strat[k] / strat[k - 1] - 1)
+    m = sum(rets) / len(rets)
+    sd = math.sqrt(sum((x - m) ** 2 for x in rets) / (len(rets) - 1))
+    return spy, strat, trades, dict(ret=strat[-1] / cap - 1, sharpe=m / sd * math.sqrt(252), dd=dd)
+
+
+def _path(pts):
+    d = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in pts)
+    length = sum(math.dist(pts[k - 1], pts[k]) for k in range(1, len(pts)))
+    return d, length
+
+
 def alphaglyph():
-    p = dict(bg="#0b0c0c", edge="#232726", ink="#f1f3f2", muted="#9aa39f", accent="#3fb950")
-    v = []
-    # in-sample equity curve that looks great, then its out-of-sample continuation
-    rng = random.Random(3)
-    pts, y = [], 158.0
-    for i in range(33):
-        y -= 2.4 + rng.uniform(-2.6, 2.6)
-        pts.append((640 + i * 5.6, y))
-    oos, y2 = [], y
-    for i in range(1, 26):
-        y2 += rng.uniform(-3.4, 3.4) + .9
-        oos.append((pts[-1][0] + i * 5.6, y2))
-    path = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in pts)
-    path2 = f"M{pts[-1][0]:.1f} {pts[-1][1]:.1f} L" + " L".join(f"{a:.1f} {b:.1f}" for a, b in oos)
-    v.append(f'<line x1="{pts[-1][0]:.1f}" y1="54" x2="{pts[-1][0]:.1f}" y2="166" stroke="#2f3533" stroke-dasharray="2 4"/>')
-    v.append(t(pts[-1][0] - 8, 46, "in-sample", 11.5, p["muted"], MONO, anchor="end"))
-    v.append(t(pts[-1][0] + 8, 46, "out-of-sample", 11.5, p["muted"], MONO))
-    v.append(f'<path class="d" style="--len:260" d="{path}" fill="none" stroke="{p["accent"]}" stroke-width="2.4" '
-             f'stroke-linejoin="round" stroke-dasharray="260" stroke-dashoffset="0"/>')
-    v.append(f'<path class="f" style="animation-delay:1.3s" d="{path2}" fill="none" stroke="#7d8682" stroke-width="2" '
-             f'stroke-dasharray="4 4" stroke-linejoin="round"/>')
-    for i, m in enumerate(("Deflated Sharpe", "PBO", "CPCV", "walk-forward")):
-        v.append(f'<g class="f" style="animation-delay:{1.4 + i * .1:.2f}s">'
-                 f'<rect x="{[640, 764, 814, 872][i]}" y="196" width="{[118, 44, 52, 92][i]}" height="24" rx="5" '
-                 f'fill="#141716" stroke="#2a302e"/>'
-                 f'<rect class="chip" style="animation-delay:{2 + i * 1.5:.1f}s" x="{[640, 764, 814, 872][i]}" y="196" '
-                 f'width="{[118, 44, 52, 92][i]}" height="24" rx="5" fill="{p["accent"]}" stroke="{p["accent"]}"/>'
-                 f'{t([640, 764, 814, 872][i] + [118, 44, 52, 92][i] / 2, 212, m, 11, p["accent"], MONO, anchor="middle")}</g>')
-    v.append(f'<g class="sweep"><line x1="640" y1="54" x2="640" y2="176" stroke="{p["accent"]}" stroke-opacity=".7"/>'
-             f'<rect x="640" y="54" width="22" height="122" fill="url(#trail)"/></g>')
-    defs = (f'<linearGradient id="trail" x1="1" x2="0"><stop offset="0" stop-color="{p["accent"]}" stop-opacity=".14"/>'
-            f'<stop offset="1" stop-color="{p["accent"]}" stop-opacity="0"/></linearGradient>')
-    css = """
-  .d { animation: draw 1.3s cubic-bezier(.4,0,.2,1) .4s both; }
-  @keyframes sweep { 0% { transform: translateX(0); opacity: 0; } 6% { opacity: 1; }
-                     88% { opacity: 1; } 100% { transform: translateX(320px); opacity: 0; } }
-  .sweep { animation: sweep 6s cubic-bezier(.45,0,.55,1) 1.6s infinite; opacity: 0; }
-  .sweep rect { transform: translateX(-22px); }
-  @keyframes chip { 0% { opacity: 0; } 4% { opacity: .2; } 22% { opacity: .2; } 27% { opacity: 0; } 100% { opacity: 0; } }
-  .chip { animation: chip 6s ease-in-out infinite; opacity: 0; }
-  @media (prefers-reduced-motion: reduce) { .sweep { display: none; } }
-"""
+    p = dict(bg="#0e1411", edge="#22302a", ink="#e6ece8", muted="#a3b0a8", accent="#30d158")
+    red, yellow, grey = "#ff453a", "#ffd60a", "#6f7c75"
+    spy, strat, trades, st = _backtest_example()
+    n = len(strat)
+    lo, hi = min(spy + strat), max(spy + strat)
+    pad = (hi - lo) * .08
+    lo, hi = lo - pad, hi + pad
+    x0, x1, y0, y1 = 640, 964, 100, 170
+    X = lambda k: x0 + k / (n - 1) * (x1 - x0)          # noqa: E731
+    Y = lambda val: y0 + (1 - (val - lo) / (hi - lo)) * (y1 - y0)  # noqa: E731
+    sp_d, sp_len = _path([(X(k), Y(v)) for k, v in enumerate(spy)])
+    st_d, st_len = _path([(X(k), Y(v)) for k, v in enumerate(strat)])
+
+    # One 9 s loop, as on the site: the lines draw, trade dots land as the line
+    # passes, the figures settle, the verdict and its three tests tick in, hold, fade.
+    period, draw_end = 9.0, .36
+    v, css = [], []
+    v.append(t(x0, 40, "example backtest, made-up numbers", 11, p["muted"], MONO))
+    figs = [(f"+{st['ret'] * 100:.1f}%", "total return", p["accent"], x0),
+            (f"{st['sharpe']:.2f}", "sharpe", p["ink"], x0 + 104),
+            (f"−{st['dd'] * 100:.1f}%", "max drawdown", red, x0 + 176)]
+    for val, lab, col, x in figs:
+        v.append(f'<g class="ag-fig">{t(x, 72, val, 22, col, SANS, 700)}{t(x, 88, lab, 10.5, p["muted"], MONO)}</g>')
+    v.append(f'<path class="ag-spy" d="{sp_d}" fill="none" stroke="{grey}" stroke-width="1.4" '
+             f'stroke-linejoin="round" stroke-dasharray="{sp_len:.0f}"/>')
+    v.append(f'<path class="ag-st" d="{st_d}" fill="none" stroke="{p["accent"]}" stroke-width="2.2" '
+             f'stroke-linejoin="round" stroke-dasharray="{st_len:.0f}"/>')
+    for n_, (k, buy) in enumerate(trades):
+        at = draw_end * k / (n - 1) * 100     # the line draws at a steady pace, so this is its head
+        css.append(f"@keyframes agd{n_} {{ 0%, {at:.1f}% {{ opacity: 0; }} {at + 2:.1f}%, 92% {{ opacity: 1; }} 97%, 100% {{ opacity: 0; }} }}"
+                   f" .agd{n_} {{ animation: agd{n_} {period}s linear 1s infinite; }}")
+        fill, stroke = (p["accent"], "none") if buy else (p["bg"], p["ink"])
+        v.append(f'<circle class="agd{n_}" cx="{X(k):.1f}" cy="{Y(strat[k]):.1f}" r="3.2" fill="{fill}" '
+                 f'stroke="{stroke}" stroke-width="1.3"/>')
+    v.append(f'<g class="ag-v"><rect x="{x0}" y="186" width="9" height="9" rx="1.5" fill="{yellow}"/>'
+             f'{t(x0 + 16, 195, "Promising, but needs more data", 13.5, yellow, SANS, 700)}</g>')
+    tests = [("✓", "Monte Carlo", p["accent"], x0), ("✓", "Deflated Sharpe", p["accent"], x0 + 104),
+             ("✕", "Fama-French", red, x0 + 232)]
+    for n_, (mark, name, col, x) in enumerate(tests):
+        v.append(f'<g class="ag-t{n_}">{t(x, 216, mark, 12, col, SANS, 700)}{t(x + 14, 216, name, 11, p["muted"], MONO)}</g>')
+
+    def show(name, at):
+        return (f"@keyframes {name} {{ 0%, {at:.0f}% {{ opacity: 0; }} {at + 3:.0f}%, 92% {{ opacity: 1; }} 97%, 100% {{ opacity: 0; }} }}"
+                f" .{name} {{ animation: {name} {period}s ease-out 1s infinite; }}")
+    css += [
+        f"@keyframes agdraw {{ 0% {{ stroke-dashoffset: var(--l); opacity: 1; }} {draw_end * 100:.0f}% {{ stroke-dashoffset: 0; }}"
+        f" 92% {{ stroke-dashoffset: 0; opacity: 1; }} 97%, 100% {{ stroke-dashoffset: 0; opacity: 0; }} }}",
+        f".ag-spy {{ --l: {sp_len:.0f}; animation: agdraw {period}s linear 1s infinite; }}",
+        f".ag-st {{ --l: {st_len:.0f}; animation: agdraw {period}s linear 1s infinite; }}",
+        show("ag-fig", draw_end * 100 - 6), show("ag-v", 42), show("ag-t0", 47), show("ag-t1", 52), show("ag-t2", 57),
+    ]
     card(slug="04-alphaglyph", palette=p,
          eyebrow="04 · STATISTICAL RIGOR · QUANTITATIVE FINANCE",
          title="AlphaGlyph",
@@ -263,7 +327,7 @@ def alphaglyph():
                "Sharpe, PBO and walk-forward tests on every strategy."],
          stats=[("106k", "param transformer", 190), ("512 MB", "served as ONNX", 200),
                 ("337", "tests in CI", 120)],
-         visual="".join(v), css=css, defs=defs)
+         visual="".join(v), css="\n  ".join([""] + css) + "\n")
 
 
 # --------------------------------------------------------------------------- 04
@@ -276,11 +340,15 @@ def chess():
         for c in range(8):
             fill = "#e7cd9c" if (r + c) % 2 == 0 else "#9b6842"
             v.append(f'<rect x="{bx + c * s}" y="{by + r * s}" width="{s}" height="{s}" fill="{fill}"/>')
-    pieces = {(0, 6): ("♚", 0), (1, 5): ("♟", 0), (1, 6): ("♟", 0), (1, 7): ("♟", 0), (2, 3): ("♛", 0),
+    # 6k1/5ppp/q7/8/8/4Q3/PP6/1K6 w: the black king is shut in behind its own
+    # pawns and its queen on a6 cannot reach the back rank, so Qe3-e8 is mate.
+    # python-chess confirms Qe8# is the only mate in one here.
+    pieces = {(0, 6): ("♚", 0), (1, 5): ("♟", 0), (1, 6): ("♟", 0), (1, 7): ("♟", 0), (2, 0): ("♛", 0),
               (7, 1): ("♚", 1), (6, 0): ("♟", 1), (6, 1): ("♟", 1)}
-    # the engine's move: the white queen e3 -> g5, highlighted the way the live site does
-    for (r, c) in ((5, 4), (3, 6)):
+    # the move, highlighted the way the live site does, then the mated king
+    for (r, c) in ((5, 4), (0, 4)):
         v.append(f'<rect class="hl" x="{bx + c * s}" y="{by + r * s}" width="{s}" height="{s}" fill="#e2b33c"/>')
+    v.append(f'<rect class="mate" x="{bx + 6 * s}" y="{by}" width="{s}" height="{s}" fill="#d9472b"/>')
     for (r, c), (g, white) in pieces.items():
         col = "#fff7e6" if white else "#1d140e"
         stroke = 'stroke="#1d140e" stroke-width=".9" paint-order="stroke"' if white else ""
@@ -291,13 +359,19 @@ def chess():
              f'font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif" fill="#fff7e6" '
              f'stroke="#1d140e" stroke-width=".9" paint-order="stroke">♛</text></g>')
     v.append(t(bx + s * 4, by + s * 8 + 26, "plays in your browser, on-device", 11.5, p["muted"], MONO, anchor="middle"))
+    v.append(f'<g class="san">{t(bx + s * 8 + 14, by + 16, "Qe8#", 15, p["ink"], SANS, 700)}'
+             f'{t(bx + s * 8 + 14, by + 32, "back-rank", 10.5, p["muted"], MONO)}'
+             f'{t(bx + s * 8 + 14, by + 45, "mate", 10.5, p["muted"], MONO)}</g>')
     defs = ""
     css = f"""
-  @keyframes qmove {{ 0%, 30% {{ transform: translate(0, 0); }} 45%, 80% {{ transform: translate({2 * s}px, {-2 * s}px); }}
-                      95%, 100% {{ transform: translate(0, 0); }} }}
-  .q {{ animation: qmove 5s cubic-bezier(.5,0,.3,1) 1s infinite; }}
-  @keyframes hl {{ 0%, 25% {{ opacity: 0; }} 35%, 85% {{ opacity: .55; }} 95%, 100% {{ opacity: 0; }} }}
-  .hl {{ animation: hl 5s ease-in-out 1s infinite; opacity: 0; }}
+  @keyframes qmove {{ 0%, 24% {{ transform: translate(0, 0); }} 40%, 82% {{ transform: translate(0, {-5 * s}px); }}
+                      94%, 100% {{ transform: translate(0, 0); }} }}
+  .q {{ animation: qmove 6s cubic-bezier(.5,0,.3,1) 1s infinite; }}
+  @keyframes hl {{ 0%, 20% {{ opacity: 0; }} 30%, 85% {{ opacity: .55; }} 95%, 100% {{ opacity: 0; }} }}
+  .hl {{ animation: hl 6s ease-in-out 1s infinite; opacity: 0; }}
+  @keyframes mate {{ 0%, 42% {{ opacity: 0; }} 48%, 82% {{ opacity: .7; }} 92%, 100% {{ opacity: 0; }} }}
+  .mate {{ animation: mate 6s ease-in-out 1s infinite; opacity: 0; }}
+  .san {{ animation: mate 6s ease-in-out 1s infinite; }}
 """
     card(slug="05-chess", palette=p,
          eyebrow="05 · PLAY IT YOURSELF · REINFORCEMENT LEARNING",
@@ -312,22 +386,66 @@ def chess():
 # --------------------------------------------------------------------------- 05
 def tradeski():
     p = dict(bg="#0a0b0d", edge="#22252a", ink="#eef1f5", muted="#9aa3af", accent="#5b9bff")
+    amber = "#f5a524"
     v = []
-    rng = random.Random(11)
-    price, x = 112.0, 640
-    for i in range(24):
-        o = price
-        c = o + rng.uniform(-11, 9.5)
-        hi_, lo_ = max(o, c) + rng.uniform(2, 8), min(o, c) - rng.uniform(2, 8)
-        up = c < o  # svg y grows down
-        col = "#16a34a" if up else "#ef4444"
-        cx = x + i * 13.5
-        d = .5 + i * .03
-        live = ' class="live"' if i == 23 else ""
-        v.append(f'<g class="f" style="animation-delay:{d:.2f}s"><g{live}><line x1="{cx + 3.5}" y1="{lo_:.1f}" x2="{cx + 3.5}" y2="{hi_:.1f}" '
-                 f'stroke="{col}" stroke-width="1.2"/><rect x="{cx}" y="{min(o, c):.1f}" width="7" '
-                 f'height="{max(abs(c - o), 1.2):.1f}" fill="{col}"/></g></g>')
-        price = c
+    # a price series with the dashboard's own indicators, all computed here the
+    # way Tradeski computes them (no TA library): SMA 20, SMA 50, Bollinger 20/2
+    rng = random.Random(7)
+    px, price = [], 100.0
+    for _ in range(130):
+        price *= 1 + rng.gauss(.0012, .013)
+        px.append(price)
+
+    def sma(k, w):
+        return sum(px[k - w + 1:k + 1]) / w
+
+    def sd(k, w):
+        m = sma(k, w)
+        return math.sqrt(sum((x - m) ** 2 for x in px[k - w + 1:k + 1]) / w)
+    ks = range(50, 130)
+    s20 = [sma(k, 20) for k in ks]
+    s50 = [sma(k, 50) for k in ks]
+    up = [sma(k, 20) + 2 * sd(k, 20) for k in ks]
+    dn = [sma(k, 20) - 2 * sd(k, 20) for k in ks]
+    pr = [px[k] for k in ks]
+    lo, hi = min(dn + pr + s50), max(up + pr + s50)
+    x0, x1, y0, y1 = 640, 964, 54, 134
+    X = lambda q: x0 + q / (len(pr) - 1) * (x1 - x0)          # noqa: E731
+    Y = lambda val: y0 + (1 - (val - lo) / (hi - lo)) * (y1 - y0)  # noqa: E731
+    pts = lambda arr: [(X(q), Y(val)) for q, val in enumerate(arr)]  # noqa: E731
+    band = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in pts(up)) + " L" + \
+        " L".join(f"{a:.1f} {b:.1f}" for a, b in reversed(pts(dn))) + " Z"
+
+    legend = [("Price", p["ink"]), ("SMA 20", p["accent"]), ("SMA 50", amber), ("Bollinger 20,2", "#6b7380")]
+    x = x0
+    for name, col in legend:
+        v.append(f'<g class="f" style="animation-delay:.6s"><rect x="{x}" y="35" width="12" height="2.4" rx="1" fill="{col}"/>'
+                 f'{t(x + 17, 40, name, 10.5, p["muted"], MONO)}</g>')
+        x += 17 + len(name) * 6.6 + 14
+    v.append(f'<path class="f" style="animation-delay:.7s" d="{band}" fill="#8b95a5" fill-opacity=".08" stroke="#6b7380" '
+             f'stroke-opacity=".55" stroke-width=".8"/>')
+    for arr, col, w, cls, dl in ((s50, amber, 1.5, "d50", .9), (s20, p["accent"], 1.5, "d20", .8), (pr, p["ink"], 1.7, "dpx", .6)):
+        d, length = _path(pts(arr))
+        v.append(f'<path class="tdraw" style="--len:{length:.0f};animation-delay:{dl}s" d="{d}" fill="none" stroke="{col}" '
+                 f'stroke-width="{w}" stroke-linejoin="round" stroke-dasharray="{length:.0f}"/>')
+
+    # crosshair: a guide line and a dot that rides the price line, in step
+    price_pts = pts(pr)
+    d_price, total = _path(price_pts)
+    cum, acc = [0.0], 0.0
+    for q in range(1, len(price_pts)):
+        acc += math.dist(price_pts[q - 1], price_pts[q])
+        cum.append(acc)
+    key_t = ";".join(f"{(a - x0) / (x1 - x0):.4f}" for a, _ in price_pts)
+    key_p = ";".join(f"{c / total:.4f}" for c in cum)
+    v.append(f'<g opacity=".9"><line x1="{x0}" y1="{y0 - 4}" x2="{x0}" y2="{y1 + 4}" stroke="{p["muted"]}" stroke-opacity=".5" '
+             f'stroke-dasharray="2 3"><animateTransform attributeName="transform" type="translate" from="0 0" to="{x1 - x0} 0" '
+             f'dur="7s" begin="2.2s" repeatCount="indefinite"/></line>'
+             f'<circle r="3.4" fill="{p["accent"]}" stroke="{p["bg"]}" stroke-width="1.5" cx="0" cy="0" opacity="0">'
+             f'<set attributeName="opacity" to="1" begin="2.2s"/>'
+             f'<animateMotion path="{d_price}" dur="7s" begin="2.2s" repeatCount="indefinite" calcMode="linear" '
+             f'keyTimes="{key_t}" keyPoints="{key_p}"/></circle></g>')
+
     # assistant reply card
     v.append(f'<g class="r" style="animation-delay:1.3s"><rect x="660" y="146" width="300" height="76" rx="10" fill="#16181b" stroke="#2a2e34"/>'
              f'{t(676, 170, "Ski", 12, p["accent"], MONO, 700)}'
@@ -336,13 +454,8 @@ def tradeski():
              f'{t(676, 210, "beta. Every figure checked against the data.", 13, p["ink"])}'
              f'<g clip-path="url(#reply)"><rect class="cover c1" x="672" y="179" width="284" height="18" fill="#16181b"/>'
              f'<rect class="cover c2" x="672" y="197" width="284" height="18" fill="#16181b"/></g></g>')
-    v.append(f'<g class="f" style="animation-delay:.8s"><circle class="blink" cx="921" cy="36" r="3.5" fill="#16a34a"/>'
-             f'{t(964, 40, "LIVE", 11.5, p["muted"], MONO, 700, anchor="end")}</g>')
     css = """
-  @keyframes live { 0%, 100% { transform: scaleY(1); } 30% { transform: scaleY(1.7); } 60% { transform: scaleY(.6); } }
-  .live { transform-box: fill-box; transform-origin: 50% 50%; animation: live 2.4s ease-in-out infinite; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
-  .blink { animation: blink 1.6s ease-in-out infinite; }
+  .tdraw { animation: draw 1.6s cubic-bezier(.4,0,.2,1) both; }
   @keyframes type1 { 0%, 8% { transform: translateX(0); } 38%, 100% { transform: translateX(284px); } }
   @keyframes type2 { 0%, 38% { transform: translateX(0); } 70%, 100% { transform: translateX(284px); } }
   .c1 { animation: type1 7s steps(38) 1.6s infinite; }
