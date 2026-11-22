@@ -422,11 +422,15 @@ def tradeski():
         v.append(f'<g class="f" style="animation-delay:.6s"><rect x="{x}" y="35" width="12" height="2.4" rx="1" fill="{col}"/>'
                  f'{t(x + 17, 40, name, 10.5, p["muted"], MONO)}</g>')
         x += 17 + len(name) * 6.6 + 14
-    v.append(f'<path class="f" style="animation-delay:.7s" d="{band}" fill="#8b95a5" fill-opacity=".08" stroke="#6b7380" '
+    # The chart redraws on a 9 s loop (draw, hold, fade), so whenever a reader
+    # scrolls down to it something is happening. A README cannot run script or
+    # lazy-load (GitHub strips loading="lazy"), so looping is the only way to
+    # have the motion still playing when the card comes into view.
+    v.append(f'<path class="tband" d="{band}" fill="#8b95a5" fill-opacity=".08" stroke="#6b7380" '
              f'stroke-opacity=".55" stroke-width=".8"/>')
-    for arr, col, w, cls, dl in ((s50, amber, 1.5, "d50", .9), (s20, p["accent"], 1.5, "d20", .8), (pr, p["ink"], 1.7, "dpx", .6)):
+    for arr, col, w in ((s50, amber, 1.5), (s20, p["accent"], 1.5), (pr, p["ink"], 1.7)):
         d, length = _path(pts(arr))
-        v.append(f'<path class="tdraw" style="--len:{length:.0f};animation-delay:{dl}s" d="{d}" fill="none" stroke="{col}" '
+        v.append(f'<path class="tdraw" style="--len:{length:.0f}" d="{d}" fill="none" stroke="{col}" '
                  f'stroke-width="{w}" stroke-linejoin="round" stroke-dasharray="{length:.0f}"/>')
 
     # crosshair: a guide line and a dot that rides the price line, in step
@@ -436,14 +440,19 @@ def tradeski():
     for q in range(1, len(price_pts)):
         acc += math.dist(price_pts[q - 1], price_pts[q])
         cum.append(acc)
-    key_t = ";".join(f"{(a - x0) / (x1 - x0):.4f}" for a, _ in price_pts)
-    key_p = ";".join(f"{c / total:.4f}" for c in cum)
-    v.append(f'<g opacity=".9"><line x1="{x0}" y1="{y0 - 4}" x2="{x0}" y2="{y1 + 4}" stroke="{p["muted"]}" stroke-opacity=".5" '
-             f'stroke-dasharray="2 3"><animateTransform attributeName="transform" type="translate" from="0 0" to="{x1 - x0} 0" '
-             f'dur="7s" begin="2.2s" repeatCount="indefinite"/></line>'
+    # the sweep runs between 24% and 88% of the same 9 s cycle, after the lines are drawn
+    a_, b_ = .24, .88
+    key_t = ";".join(["0"] + [f"{a_ + (b_ - a_) * (x - x0) / (x1 - x0):.4f}" for x, _ in price_pts] + ["1"])
+    key_p = ";".join(["0"] + [f"{c / total:.4f}" for c in cum] + ["1"])
+    vis = f'values="0;0;1;1;0;0" keyTimes="0;{a_ - .01};{a_ + .01};{b_ - .01};{b_ + .01};1"'
+    v.append(f'<g><line x1="{x0}" y1="{y0 - 4}" x2="{x0}" y2="{y1 + 4}" stroke="{p["muted"]}" stroke-opacity=".5" '
+             f'stroke-dasharray="2 3" opacity="0">'
+             f'<animateTransform attributeName="transform" type="translate" values="0 0;0 0;{x1 - x0} 0;{x1 - x0} 0" '
+             f'keyTimes="0;{a_};{b_};1" dur="9s" begin="1s" repeatCount="indefinite"/>'
+             f'<animate attributeName="opacity" {vis} dur="9s" begin="1s" repeatCount="indefinite"/></line>'
              f'<circle r="3.4" fill="{p["accent"]}" stroke="{p["bg"]}" stroke-width="1.5" cx="0" cy="0" opacity="0">'
-             f'<set attributeName="opacity" to="1" begin="2.2s"/>'
-             f'<animateMotion path="{d_price}" dur="7s" begin="2.2s" repeatCount="indefinite" calcMode="linear" '
+             f'<animate attributeName="opacity" {vis} dur="9s" begin="1s" repeatCount="indefinite"/>'
+             f'<animateMotion path="{d_price}" dur="9s" begin="1s" repeatCount="indefinite" calcMode="linear" '
              f'keyTimes="{key_t}" keyPoints="{key_p}"/></circle></g>')
 
     # assistant reply card
@@ -455,7 +464,11 @@ def tradeski():
              f'<g clip-path="url(#reply)"><rect class="cover c1" x="672" y="179" width="284" height="18" fill="#16181b"/>'
              f'<rect class="cover c2" x="672" y="197" width="284" height="18" fill="#16181b"/></g></g>')
     css = """
-  .tdraw { animation: draw 1.6s cubic-bezier(.4,0,.2,1) both; }
+  @keyframes tdraw { 0% { stroke-dashoffset: var(--len); opacity: 1; } 20% { stroke-dashoffset: 0; }
+                     92% { stroke-dashoffset: 0; opacity: 1; } 97%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+  .tdraw { animation: tdraw 9s cubic-bezier(.4,0,.2,1) 1s infinite; }
+  @keyframes tband { 0%, 12% { opacity: 0; } 22%, 92% { opacity: 1; } 97%, 100% { opacity: 0; } }
+  .tband { animation: tband 9s ease-out 1s infinite; }
   @keyframes type1 { 0%, 8% { transform: translateX(0); } 38%, 100% { transform: translateX(284px); } }
   @keyframes type2 { 0%, 38% { transform: translateX(0); } 70%, 100% { transform: translateX(284px); } }
   .c1 { animation: type1 7s steps(38) 1.6s infinite; }
